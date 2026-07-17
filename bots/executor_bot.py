@@ -149,9 +149,12 @@ async def reject_task_start(message: Message, state: FSMContext):
 @dp.message(RejectFSM.entering_reason)
 async def reject_task_reason(message: Message, state: FSMContext):
     data = await state.get_data()
-    await api_client.respond_assignment(data["assignment_id"], "rad_etildi", reason=message.text)
+    status, _ = await api_client.respond_assignment(data["assignment_id"], "rad_etildi", reason=message.text)
     await state.clear()
-    await message.answer("Rad etildi. Ma'lumot dispetcherga yuborildi.", reply_markup=MAIN_MENU)
+    if status == 200:
+        await message.answer("Rad etildi. Ma'lumot dispetcherga yuborildi.", reply_markup=MAIN_MENU)
+    else:
+        await message.answer("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.", reply_markup=MAIN_MENU)
 
 
 async def start_working_prompt(message: Message, assignment_id: int):
@@ -168,7 +171,10 @@ async def start_working_prompt(message: Message, assignment_id: int):
 @dp.message(F.text.startswith("▶️ Ish boshlash"))
 async def begin_work(message: Message):
     assignment_id = int(message.text.split("#")[-1])
-    await api_client.start_assignment(assignment_id)
+    status, _ = await api_client.start_assignment(assignment_id)
+    if status != 200:
+        await message.answer("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.")
+        return
     kb = ReplyKeyboardMarkup(
         keyboard=[
             [KeyboardButton(text=f"✔️ Bajarildi deb belgilash #{assignment_id}")],
@@ -192,9 +198,12 @@ async def request_info_start(message: Message, state: FSMContext):
 @dp.message(InfoRequestFSM.entering_question)
 async def request_info_send(message: Message, state: FSMContext):
     data = await state.get_data()
-    await api_client.request_more_info(data["assignment_id"], message.text)
+    status, _ = await api_client.request_more_info(data["assignment_id"], message.text)
     await state.clear()
-    await message.answer("So'rov mijozga yuborildi.", reply_markup=MAIN_MENU)
+    if status == 200:
+        await message.answer("So'rov mijozga yuborildi.", reply_markup=MAIN_MENU)
+    else:
+        await message.answer("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.", reply_markup=MAIN_MENU)
 
 
 @dp.message(F.text.startswith("⏱ Qo'shimcha vaqt so'rash"))
@@ -221,9 +230,12 @@ async def extend_hours(message: Message, state: FSMContext):
 @dp.message(ExtendFSM.entering_reason)
 async def extend_reason(message: Message, state: FSMContext):
     data = await state.get_data()
-    await api_client.extend_assignment(data["assignment_id"], data["hours"], message.text)
+    status, _ = await api_client.extend_assignment(data["assignment_id"], data["hours"], message.text)
     await state.clear()
-    await message.answer("So'rov dispetcherga yuborildi, tasdiqlanishini kuting.", reply_markup=MAIN_MENU)
+    if status == 200:
+        await message.answer("So'rov dispetcherga yuborildi, tasdiqlanishini kuting.", reply_markup=MAIN_MENU)
+    else:
+        await message.answer("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.", reply_markup=MAIN_MENU)
 
 
 @dp.message(F.text.startswith("✔️ Bajarildi deb belgilash"))
@@ -279,11 +291,14 @@ async def complete_upload_doc(message: Message, state: FSMContext):
 @dp.message(ReportFSM.uploading_files, F.text == "✅ Yakunlash")
 async def complete_finish(message: Message, state: FSMContext):
     data = await state.get_data()
-    await api_client.complete_assignment(
+    status, _ = await api_client.complete_assignment(
         data["assignment_id"], data["report_text"], data.get("time_spent_minutes"), data.get("files", [])
     )
     await state.clear()
-    await message.answer("Ajoyib! Topshiriq bajarildi deb belgilandi. Rahmat!", reply_markup=MAIN_MENU)
+    if status == 200:
+        await message.answer("Ajoyib! Topshiriq bajarildi deb belgilandi. Rahmat!", reply_markup=MAIN_MENU)
+    else:
+        await message.answer("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.", reply_markup=MAIN_MENU)
 
 
 @dp.message(F.text == "🛠 Jarayondagi ishlarim")

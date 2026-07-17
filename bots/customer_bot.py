@@ -347,6 +347,9 @@ async def handle_rate_callback(callback: CallbackQuery, state: FSMContext):
 @dp.message(F.text.startswith("REQ-"))
 async def start_rating(message: Message, state: FSMContext):
     status, reqs = await api_client.list_customer_requests(str(message.from_user.id))
+    if status != 200:
+        await message.answer("Murojaatlar ro'yxatini yuklashda xatolik yuz berdi. Birozdan so'ng qayta urinib ko'ring.")
+        return
     match = next((r for r in reqs if r["number"] == message.text.strip()), None)
     if not match:
         await message.answer("Bunday raqamli murojaat topilmadi.")
@@ -389,9 +392,15 @@ async def enter_feedback(message: Message, state: FSMContext):
 async def enter_suggestion(message: Message, state: FSMContext):
     data = await state.get_data()
     suggestion = None if message.text.strip() == "-" else message.text
-    await api_client.rate_request(data["request_id"], data["stars"], data.get("comment"), suggestion)
+    status, _ = await api_client.rate_request(data["request_id"], data["stars"], data.get("comment"), suggestion)
     await state.clear()
-    await message.answer("Rahmat! Fikr-mulohazangiz uchun tashakkur.", reply_markup=MAIN_MENU)
+    if status == 200:
+        await message.answer("Rahmat! Fikr-mulohazangiz uchun tashakkur.", reply_markup=MAIN_MENU)
+    else:
+        await message.answer(
+            "Baholashni saqlashda xatolik yuz berdi (ehtimol bu murojaat allaqachon baholangan).",
+            reply_markup=MAIN_MENU,
+        )
 
 
 @dp.message(F.text == "ℹ️ Yordam")

@@ -6,9 +6,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# psycopg2 (Postgres) uchun build kutubxonalari
+# psycopg2 (Postgres) uchun build kutubxonalari; procps — healthcheck'da bot
+# jarayonini pgrep bilan tekshirish uchun
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends gcc libpq-dev curl \
+    && apt-get install -y --no-install-recommends gcc libpq-dev curl procps \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
@@ -16,7 +17,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN mkdir -p /app/uploads /app/instance
+RUN mkdir -p /app/uploads /app/instance \
+    && chmod +x /app/docker-entrypoint.sh /app/docker-healthcheck.sh
 
 # Root bo'lmagan foydalanuvchi ostida ishga tushirish (xavfsizlik)
 RUN useradd --create-home appuser && chown -R appuser:appuser /app
@@ -25,9 +27,11 @@ USER appuser
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:8000/healthz || exit 1
+    CMD ["/app/docker-healthcheck.sh"]
 
-# scripts/seed.py idempotent: jadvallar mavjud bo'lmasa yaratadi (db.create_all()) va
-# faqat super admin/bo'lim/kategoriya bo'lmasa qo'shadi — shu sabab har bir deploy'da
-# (Railway kabi migratsiya bosqichi bo'lmagan muhitlarda ham) xavfsiz ishga tushiriladi.
-CMD ["sh", "-c", "python scripts/seed.py && gunicorn -c gunicorn.conf.py run:app"]
+# Bitta image — web va Telegram botlar (Railway'da alohida xizmat sifatida)
+# SERVICE_ROLE muhit o'zgaruvchisi orqali qaysi jarayon ishga tushishini tanlaydi
+# (qarang: docker-entrypoint.sh). scripts/seed.py idempotent: jadvallar mavjud
+# bo'lmasa yaratadi, shuning uchun migratsiya bosqichisiz muhitlarda ham xavfsiz.
+ENV SERVICE_ROLE=web
+CMD ["/app/docker-entrypoint.sh"]

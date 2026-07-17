@@ -1,0 +1,44 @@
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky6" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#171331"/>
+      <stop offset="55%" stop-color="#3a1f3d"/>
+      <stop offset="100%" stop-color="#ff6a3d"/>
+    </linearGradient>
+    <radialGradient id="blast6" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffe9b0" stop-opacity="0.9"/>
+      <stop offset="45%" stop-color="#ff8a3d" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#ff8a3d" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky6)"/>
+  <circle cx="1220" cy="620" r="340" fill="url(#blast6)"/>
+  <g stroke="#ffd79a" stroke-width="3" opacity="0.55">
+    <line x1="1220" y1="620" x2="1520" y2="480"/>
+    <line x1="1220" y1="620" x2="1560" y2="620"/>
+    <line x1="1220" y1="620" x2="1500" y2="760"/>
+    <line x1="1220" y1="620" x2="1380" y2="820"/>
+    <line x1="1220" y1="620" x2="1000" y2="820"/>
+    <line x1="1220" y1="620" x2="920" y2="700"/>
+  </g>
+  <path d="M0,720 C260,690 520,740 780,715 C1040,692 1300,730 1600,710 L1600,900 L0,900 Z" fill="#0d0a1f" opacity="0.85"/>
+  <g fill="#0d0a1f" opacity="0.92">
+    <rect x="360" y="470" width="130" height="230" rx="14"/>
+    <rect x="392" y="360" width="66" height="120" rx="10"/>
+    <circle cx="425" cy="330" r="34"/>
+    <rect x="300" y="500" width="60" height="150" rx="16"/>
+    <rect x="490" y="500" width="60" height="150" rx="16"/>
+    <rect x="330" y="650" width="55" height="110" rx="12"/>
+    <rect x="440" y="650" width="55" height="110" rx="12"/>
+    <line x1="425" y1="330" x2="425" y2="290" stroke="#0d0a1f" stroke-width="6"/>
+    <circle cx="425" cy="284" r="7"/>
+  </g>
+  <circle cx="425" cy="326" r="9" fill="#7fe8ff" opacity="0.85"/>
+  <g fill="#ffe9b0" opacity="0.75">
+    <circle cx="700" cy="240" r="3"/>
+    <circle cx="820" cy="300" r="2.5"/>
+    <circle cx="950" cy="200" r="3"/>
+    <circle cx="1080" cy="340" r="2.5"/>
+    <circle cx="600" cy="380" r="2.5"/>
+  </g>
+</svg>

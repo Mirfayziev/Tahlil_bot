@@ -1,0 +1,50 @@
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky-c2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0b0620"/>
+      <stop offset="45%" stop-color="#2a0f4d"/>
+      <stop offset="100%" stop-color="#ff2bd6"/>
+    </linearGradient>
+    <linearGradient id="sun-c2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffe93b"/>
+      <stop offset="100%" stop-color="#ff2bd6"/>
+    </linearGradient>
+    <linearGradient id="ground-c2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1a0b2e"/>
+      <stop offset="100%" stop-color="#05030d"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky-c2)"/>
+  <g fill="#ffffff" opacity="0.7">
+    <circle cx="150" cy="90" r="1.6"/>
+    <circle cx="320" cy="130" r="1.4"/>
+    <circle cx="480" cy="70" r="1.8"/>
+    <circle cx="700" cy="110" r="1.4"/>
+    <circle cx="980" cy="80" r="1.6"/>
+    <circle cx="1200" cy="120" r="1.4"/>
+    <circle cx="1400" cy="70" r="1.8"/>
+  </g>
+  <circle cx="800" cy="460" r="200" fill="url(#sun-c2)"/>
+  <g stroke="#0b0620" stroke-width="14" opacity="0.85">
+    <line x1="620" y1="500" x2="980" y2="500"/>
+    <line x1="620" y1="540" x2="980" y2="540"/>
+    <line x1="620" y1="580" x2="980" y2="580"/>
+  </g>
+  <rect y="560" width="1600" height="340" fill="url(#ground-c2)"/>
+  <g stroke="#00e5ff" stroke-width="2" opacity="0.55">
+    <line x1="800" y1="560" x2="0" y2="900"/>
+    <line x1="800" y1="560" x2="200" y2="900"/>
+    <line x1="800" y1="560" x2="450" y2="900"/>
+    <line x1="800" y1="560" x2="800" y2="900"/>
+    <line x1="800" y1="560" x2="1150" y2="900"/>
+    <line x1="800" y1="560" x2="1400" y2="900"/>
+    <line x1="800" y1="560" x2="1600" y2="900"/>
+  </g>
+  <g stroke="#ff2bd6" stroke-width="1.4" opacity="0.5">
+    <line x1="0" y1="620" x2="1600" y2="620"/>
+    <line x1="60" y1="690" x2="1540" y2="690"/>
+    <line x1="140" y1="770" x2="1460" y2="770"/>
+    <line x1="260" y1="860" x2="1340" y2="860"/>
+  </g>
+  <path d="M0,540 L180,470 L360,530 L560,450 L800,520 L1040,450 L1240,530 L1420,470 L1600,540 L1600,570 L0,570 Z" fill="#12082a" opacity="0.9"/>
+</svg>

@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Murojaatlar{% endblock %}
+{% block content %}
+<h2>📋 Murojaatlar</h2>
+
+<form class="filters" method="GET">
+  <input type="text" name="q" placeholder="Qidirish (raqam, matn)" value="{{ current_filters.get('q','') }}">
+  <select name="status">
+    <option value="">Barcha holatlar</option>
+    {% for s in statuses %}
+    <option value="{{ s.value }}" {{ 'selected' if current_filters.get('status')==s.value }}>{{ s.value }}</option>
+    {% endfor %}
+  </select>
+  <select name="category">
+    <option value="">Barcha kategoriyalar</option>
+    {% for c in categories %}
+    <option value="{{ c.id }}" {{ 'selected' if current_filters.get('category')|string==c.id|string }}>{{ c.name_uz }}</option>
+    {% endfor %}
+  </select>
+  <select name="priority">
+    <option value="">Barcha ustuvorliklar</option>
+    {% for p in priorities %}
+    <option value="{{ p.value }}" {{ 'selected' if current_filters.get('priority')==p.value }}>{{ p.value }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn" type="submit">Filtrlash</button>
+</form>
+
+<div class="card">
+<table>
+  <thead>
+    <tr>
+      <th>Raqam</th><th>Murojatchi</th><th>Bino</th><th>Bo'linma</th><th>Kategoriya</th><th>Tavsif</th><th>Ustuvorlik</th>
+      <th>Holat</th><th>Muddat</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in requests %}
+    <tr style="--i: {{ loop.index }}">
+      <td>{{ r.number }}</td>
+      <td>{{ r.customer.full_name or '-' }}{% if r.customer.phone %}<br><small style="color:var(--text-dim);">{{ r.customer.phone }}</small>{% endif %}</td>
+      <td>{{ r.building.name if r.building else '-' }}</td>
+      <td>{{ r.org_display }}</td>
+      <td>{{ r.category.name_uz }}</td>
+      <td>{{ r.description[:60] }}{% if r.description|length > 60 %}…{% endif %}</td>
+      <td class="priority-{{ r.priority.value if r.priority else 'orta' }}">{{ r.priority.value if r.priority else '-' }}</td>
+      <td><span class="badge badge-{{ r.status.value }}">{{ r.status.value }}</span>
+        {% if r.is_overdue %}<span class="badge badge-rad_etildi">kechikdi</span>{% endif %}
+      </td>
+      <td>{{ r.deadline_at.strftime('%d.%m %H:%M') if r.deadline_at else '-' }}</td>
+      <td><a class="btn btn-outline" href="{{ url_for('dispatcher.request_detail', req_id=r.id) }}">Ko'rish</a></td>
+    </tr>
+    {% else %}
+    <tr><td colspan="10">Murojaatlar topilmadi.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

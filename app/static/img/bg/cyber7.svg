@@ -1,0 +1,50 @@
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky-c7" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#050712"/>
+      <stop offset="60%" stop-color="#0d1230"/>
+      <stop offset="100%" stop-color="#22103d"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky-c7)"/>
+  <g fill="#080a18" opacity="0.95">
+    <rect x="40" y="260" width="150" height="500"/>
+    <rect x="220" y="180" width="120" height="580"/>
+    <rect x="1250" y="220" width="140" height="540"/>
+    <rect x="1420" y="300" width="130" height="460"/>
+  </g>
+  <g fill="#ff2bd6" opacity="0.7">
+    <rect x="60" y="300" width="10" height="14"/>
+    <rect x="95" y="330" width="10" height="14"/>
+    <rect x="60" y="370" width="10" height="14"/>
+    <rect x="240" y="210" width="9" height="13"/>
+    <rect x="270" y="250" width="9" height="13"/>
+    <rect x="1270" y="250" width="9" height="13"/>
+    <rect x="1440" y="330" width="9" height="13"/>
+  </g>
+  <g fill="#00e5ff" opacity="0.7">
+    <rect x="130" y="330" width="9" height="13"/>
+    <rect x="300" y="290" width="9" height="13"/>
+    <rect x="1310" y="290" width="9" height="13"/>
+    <rect x="1480" y="370" width="9" height="13"/>
+  </g>
+  <rect x="700" y="140" width="12" height="220" fill="#ff2bd6" opacity="0.9"/>
+  <circle cx="706" cy="132" r="9" fill="#ff2bd6"/>
+  <path d="M0,720 L1600,720 L1600,900 L0,900 Z" fill="#04050c"/>
+  <g stroke="#ff2bd6" stroke-width="1.2" opacity="0.28">
+    <line x1="800" y1="720" x2="150" y2="900"/>
+    <line x1="800" y1="720" x2="800" y2="900"/>
+    <line x1="800" y1="720" x2="1450" y2="900"/>
+  </g>
+  <!-- two small generic faceless silhouettes walking away, wide shot -->
+  <g fill="#04050c">
+    <path d="M690,760 C686,748 690,736 704,732 C718,728 730,736 732,748
+             C734,758 730,766 722,770 L726,790 C740,794 750,806 752,822
+             L756,870 L680,870 L684,822 C672,816 664,802 666,788 L670,752 Z"/>
+    <path d="M840,780 C837,770 840,760 851,757 C862,754 872,761 873,771
+             C874,779 871,785 865,788 L868,804 C879,808 887,818 888,831
+             L891,868 L832,868 L835,831 C826,826 819,815 821,804 L824,776 Z"/>
+  </g>
+  <ellipse cx="712" cy="878" rx="60" ry="10" fill="#ff2bd6" opacity="0.1"/>
+  <ellipse cx="858" cy="874" rx="46" ry="8" fill="#00e5ff" opacity="0.1"/>
+</svg>

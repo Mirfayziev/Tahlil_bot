@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Boshqaruv paneli{% endblock %}
+{% block content %}
+<h2>📊 Boshqaruv paneli</h2>
+
+<div class="grid-4" id="summary-cards">
+  <div class="stat-card"><div class="stat-value skeleton" id="v-total">000</div><div class="stat-label">Jami murojaatlar</div></div>
+  <div class="stat-card"><div class="stat-value skeleton" id="v-open">000</div><div class="stat-label">Ochiq murojaatlar</div></div>
+  <div class="stat-card"><div class="stat-value skeleton" id="v-overdue">000</div><div class="stat-label">Kechikkan</div></div>
+  <div class="stat-card"><div class="stat-value skeleton" id="v-rating">000</div><div class="stat-label">O'rtacha baho ⭐</div></div>
+</div>
+
+<div class="charts-grid">
+  <div class="chart-box"><h3>Murojaatlar dinamikasi</h3><canvas id="chartDynamics"></canvas></div>
+  <div class="chart-box"><h3>TOP xizmatlar</h3><canvas id="chartCategories"></canvas></div>
+  <div class="chart-box"><h3>TOP ijrochilar</h3><canvas id="chartExecutors"></canvas></div>
+  <div class="chart-box"><h3>SLA holati</h3><canvas id="chartSla"></canvas></div>
+  <div class="chart-box"><h3>Bo'limlar kesimi</h3><canvas id="chartDepartments"></canvas></div>
+</div>
+
+<div class="card ai-card">
+  <h3>🤖 AI avtomatik yo'naltirish holati</h3>
+  <p id="ai-auto-status" style="color:var(--text-dim); margin-bottom: 0;">
+    <span class="spinner"></span>Tekshirilmoqda...
+  </p>
+</div>
+
+<div class="card ai-card">
+  <h3>🤖 AI xulosalari (rahbar uchun)</h3>
+  <p id="ai-insights" style="white-space: pre-line; color:var(--text-dim);">
+    <span class="spinner"></span>Tayyorlanmoqda...
+  </p>
+</div>
+
+<script>
+async function loadJSON(url) { const r = await fetch(url); return r.json(); }
+
+function setStat(id, value) {
+  const el = document.getElementById(id);
+  el.textContent = value;
+  el.classList.remove('skeleton');
+}
+
+Chart.defaults.color = '#8b9bc0';
+Chart.defaults.borderColor = 'rgba(0,229,255,0.15)';
+
+(async () => {
+  const s = await loadJSON("{{ url_for('dashboard.summary') }}");
+  setStat('v-total', s.total);
+  setStat('v-open', s.open);
+  setStat('v-overdue', s.overdue);
+  setStat('v-rating', s.avg_rating);
+
+  const dyn = await loadJSON("{{ url_for('dashboard.dynamics') }}");
+  new Chart(document.getElementById('chartDynamics'), {
+    type: 'line',
+    data: { labels: dyn.map(d=>d.date), datasets: [{ label: 'Murojaatlar', data: dyn.map(d=>d.count), borderColor: '#00e5ff', backgroundColor: 'rgba(0,229,255,0.15)', fill: true, tension: 0.35 }] },
+    options: { animation: { duration: 700, easing: 'easeOutQuart' } }
+  });
+
+  const cats = await loadJSON("{{ url_for('dashboard.top_categories') }}");
+  new Chart(document.getElementById('chartCategories'), {
+    type: 'bar',
+    data: { labels: cats.map(c=>c.category), datasets: [{ label: 'Soni', data: cats.map(c=>c.count), backgroundColor: '#39ff8c', borderRadius: 6 }] },
+    options: { animation: { duration: 700, easing: 'easeOutQuart' } }
+  });
+
+  const execs = await loadJSON("{{ url_for('dashboard.top_executors') }}");
+  new Chart(document.getElementById('chartExecutors'), {
+    type: 'bar',
+    data: { labels: execs.map(e=>e.executor), datasets: [{ label: 'Bajarilgan', data: execs.map(e=>e.count), backgroundColor: '#ff2bd6', borderRadius: 6 }] },
+    options: { indexAxis: 'y', animation: { duration: 700, easing: 'easeOutQuart' } }
+  });
+
+  const sla = await loadJSON("{{ url_for('dashboard.sla_status') }}");
+  new Chart(document.getElementById('chartSla'), {
+    type: 'doughnut',
+    data: { labels: ['O\'z vaqtida', 'Kechikkan'], datasets: [{ data: [sla.on_time, sla.overdue], backgroundColor: ['#39ff8c', '#ff3860'] }] },
+    options: { animation: { animateRotate: true, duration: 800 } }
+  });
+
+  const deps = await loadJSON("{{ url_for('dashboard.department_breakdown') }}");
+  new Chart(document.getElementById('chartDepartments'), {
+    type: 'pie',
+    data: { labels: deps.map(d=>d.department), datasets: [{ data: deps.map(d=>d.count), backgroundColor: ['#00e5ff','#ff2bd6','#39ff8c','#ffe93b','#ff3860','#8b9bc0'] }] },
+    options: { animation: { animateRotate: true, duration: 800 } }
+  });
+
+  const autoStatus = await loadJSON("{{ url_for('dashboard.ai_auto_assign_status') }}");
+  const statusEl = document.getElementById('ai-auto-status');
+  if (!autoStatus.enabled) {
+    statusEl.textContent = "AI avtomatik yo'naltirish o'chirilgan (.env dagi AUTO_ASSIGN_ENABLED).";
+  } else if (autoStatus.pending_auto_assign > 0) {
+    statusEl.textContent = `${autoStatus.pending_auto_assign} ta murojaat AI tomonidan avtomatik yo'naltirilishi kutilmoqda ` +
+      `(bu faqat bots/notifier.py fon jarayoni ishlab turganda amalga oshadi).`;
+  } else if (autoStatus.waiting_before_auto_assign > 0) {
+    statusEl.textContent = `${autoStatus.waiting_before_auto_assign} ta yangi murojaat bor — dispetcher ${autoStatus.after_minutes} ` +
+      `daqiqa ichida javob bermasa, AI ularni avtomatik yo'naltiradi.`;
+  } else {
+    statusEl.textContent = "Hozircha AI avtomatik yo'naltirishi kerak bo'lgan murojaatlar yo'q.";
+  }
+
+  const ai = await loadJSON("{{ url_for('dashboard.ai_insights') }}");
+  document.getElementById('ai-insights').textContent = ai.insights;
+})();
+</script>
+{% endblock %}

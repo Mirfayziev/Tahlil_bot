@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Kirish{% endblock %}
+{% block auth_content %}
+<div class="login-page" style="--login-bg:url('{{ url_for('static', filename='img/bg/' ~ bg_scene) }}')">
+  <div class="login-box">
+    <img src="{{ url_for('static', filename='img/logo.png') }}" alt="O'zbekiston Respublikasi Iqtisodiyot va Moliya Vazirligi" class="login-logo">
+    <h1>Xizmat Platformasi</h1>
+    <p>Boshqaruv paneliga kirish</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    <form method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="text" name="username" placeholder="Login" required autofocus>
+      <input type="password" name="password" placeholder="Parol" required>
+      <button type="submit">Kirish</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

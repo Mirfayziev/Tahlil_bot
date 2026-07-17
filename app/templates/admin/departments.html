@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Bo'limlar{% endblock %}
+{% block content %}
+<h2>🏢 Bo'limlar</h2>
+<div class="card">
+  <form method="POST" style="display:flex; gap:10px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="text" name="name" placeholder="Bo'lim nomi" required style="flex:1;">
+    <input type="text" name="description" placeholder="Tavsif" style="flex:2;">
+    <button class="btn" type="submit">Qo'shish</button>
+  </form>
+</div>
+<div class="card">
+  <table>
+    <thead><tr><th>Nomi</th><th>Tavsif</th><th>Xodimlar soni</th></tr></thead>
+    <tbody>
+      {% for d in departments %}
+      <tr style="--i: {{ loop.index }}"><td>{{ d.name }}</td><td>{{ d.description or '-' }}</td><td>{{ d.users|length }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

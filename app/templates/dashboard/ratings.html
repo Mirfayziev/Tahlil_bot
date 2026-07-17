@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Baholar{% endblock %}
+
+{% macro feedback_cell(text) %}
+  {% if text and text|length > 80 %}
+    <span class="fb-short">{{ text[:80] }}…</span><span class="fb-full" hidden>{{ text }}</span>
+    <button type="button" class="fb-toggle" onclick="toggleFeedback(this)">to'liq ko'rish</button>
+  {% else %}
+    {{ text or '-' }}
+  {% endif %}
+{% endmacro %}
+
+{% block content %}
+<h2>⭐ Mijozlar baholari va fikrlari</h2>
+
+<div class="grid-4" id="rating-summary">
+  <div class="stat-card">
+    <div class="stat-value">{{ avg_stars }}</div>
+    <div class="stat-label">O'rtacha baho (jami {{ total }} ta)</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ with_comment }}</div>
+    <div class="stat-label">Izoh yozilgan</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">{{ with_suggestion }}</div>
+    <div class="stat-label">Taklif/so'rov yozilgan</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value">
+      {% for n in [5,4,3,2,1] %}{{ n }}⭐:{{ distribution[n] }}{% if not loop.last %} &nbsp; {% endif %}{% endfor %}
+    </div>
+    <div class="stat-label">Yulduzlar taqsimoti</div>
+  </div>
+</div>
+
+<form class="filters" method="GET">
+  <select name="stars" onchange="this.form.submit()">
+    <option value="">Barcha baholar</option>
+    {% for n in [5,4,3,2,1] %}
+    <option value="{{ n }}" {{ 'selected' if stars_filter == n }}>{{ n }} ⭐ ({{ distribution[n] }})</option>
+    {% endfor %}
+  </select>
+</form>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>Sana</th><th>Murojaat</th><th>Kategoriya</th><th>Mijoz</th><th>Ijrochi</th>
+        <th>Baho</th><th>Izoh</th><th>Taklif / so'rov</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in ratings %}
+      <tr style="--i: {{ loop.index }}">
+        <td>{{ r.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+        <td>{{ r.request.number }}</td>
+        <td>{{ r.request.category.name_uz if r.request.category else '-' }}</td>
+        <td>{{ r.request.customer.full_name or r.request.customer.phone or '-' }}</td>
+        <td>{{ r.request.current_executor.full_name if r.request.current_executor else '-' }}</td>
+        <td class="{{ 'priority-shoshilinch' if r.stars <= 2 else '' }}">{{ '⭐' * r.stars }}</td>
+        <td class="feedback-cell">{{ feedback_cell(r.comment) }}</td>
+        <td class="feedback-cell">{{ feedback_cell(r.suggestion) }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="8">Hozircha baholar yo'q.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+function toggleFeedback(btn) {
+  var cell = btn.closest('td');
+  var short = cell.querySelector('.fb-short');
+  var full = cell.querySelector('.fb-full');
+  var expanding = full.hidden;
+  full.hidden = !expanding;
+  short.hidden = expanding;
+  btn.textContent = expanding ? "yopish" : "to'liq ko'rish";
+}
+</script>
+{% endblock %}

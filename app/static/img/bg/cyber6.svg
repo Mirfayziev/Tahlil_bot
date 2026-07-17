@@ -1,0 +1,66 @@
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky-c6" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#06040f"/>
+      <stop offset="55%" stop-color="#1a0a2e"/>
+      <stop offset="100%" stop-color="#3d1146"/>
+    </linearGradient>
+    <radialGradient id="glow-c6" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky-c6)"/>
+  <circle cx="1150" cy="260" r="260" fill="url(#glow-c6)"/>
+  <g fill="#0a0714" opacity="0.95">
+    <rect x="60" y="300" width="130" height="500"/>
+    <rect x="210" y="220" width="100" height="580"/>
+    <rect x="330" y="360" width="150" height="440"/>
+    <rect x="1300" y="280" width="120" height="520"/>
+    <rect x="1440" y="220" width="110" height="580"/>
+  </g>
+  <g fill="#00e5ff" opacity="0.75">
+    <rect x="80" y="330" width="10" height="14"/>
+    <rect x="110" y="360" width="10" height="14"/>
+    <rect x="140" y="330" width="10" height="14"/>
+    <rect x="230" y="250" width="9" height="13"/>
+    <rect x="260" y="290" width="9" height="13"/>
+    <rect x="1320" y="310" width="9" height="13"/>
+    <rect x="1460" y="250" width="9" height="13"/>
+  </g>
+  <g fill="#ff2bd6" opacity="0.7">
+    <rect x="350" y="390" width="9" height="13"/>
+    <rect x="380" y="430" width="9" height="13"/>
+    <rect x="1490" y="290" width="9" height="13"/>
+  </g>
+  <path d="M0,700 L1600,700 L1600,900 L0,900 Z" fill="#050309"/>
+  <g stroke="#00e5ff" stroke-width="1.2" opacity="0.3">
+    <line x1="800" y1="700" x2="200" y2="900"/>
+    <line x1="800" y1="700" x2="800" y2="900"/>
+    <line x1="800" y1="700" x2="1400" y2="900"/>
+  </g>
+  <!-- generic faceless silhouette figure, rear three-quarter view, long coat -->
+  <g fill="#050309">
+    <path d="M760,470
+             C752,440 758,410 790,398
+             C822,386 856,398 862,428
+             C868,452 862,470 850,482
+             L858,520
+             C880,528 900,548 906,580
+             L916,720
+             C918,760 900,800 860,820
+             L850,900
+             L706,900
+             L714,820
+             C690,806 676,780 678,750
+             L688,590
+             C692,552 712,524 742,508
+             Z"/>
+    <path d="M862,428 C878,436 886,456 882,476 C878,492 866,500 856,498 Z" opacity="0.95"/>
+  </g>
+  <g fill="#00e5ff" opacity="0.55">
+    <rect x="880" y="560" width="6" height="60" rx="3"/>
+    <circle cx="883" cy="556" r="5"/>
+  </g>
+  <ellipse cx="790" cy="850" rx="140" ry="26" fill="#00e5ff" opacity="0.08"/>
+</svg>

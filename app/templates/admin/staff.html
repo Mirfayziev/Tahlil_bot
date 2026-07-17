@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Xodimlar{% endblock %}
+{% block content %}
+<h2>👥 Xodimlar / Ijrochilar</h2>
+
+<div class="card">
+  <h3>Yangi xodim qo'shish</h3>
+  <form method="POST" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="text" name="full_name" placeholder="F.I.Sh" required>
+    <input type="text" name="username" placeholder="Login" required>
+    <input type="password" name="password" placeholder="Parol">
+    <select name="role" required>
+      {% for r in roles %}
+      <option value="{{ r.value }}">{{ r.value }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="position" placeholder="Lavozimi">
+    <select name="department_id">
+      <option value="">— Bo'lim —</option>
+      {% for d in departments %}
+      <option value="{{ d.id }}">{{ d.name }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="phone" placeholder="Telefon">
+    <input type="text" name="telegram_id" placeholder="Telegram ID (ijrochilar uchun)">
+    <button class="btn" type="submit">Qo'shish</button>
+  </form>
+</div>
+
+<div class="card">
+  <table>
+    <thead><tr><th>F.I.Sh</th><th>Login</th><th>Rol</th><th>Bo'lim / Yo'nalishlar</th><th>Bino(lar)</th><th>Yuklama</th><th>Holat</th><th></th></tr></thead>
+    <tbody>
+      {% for u in users %}
+      <tr style="--i: {{ loop.index }}">
+        <td>{{ u.full_name }}</td>
+        <td>{{ u.username }}</td>
+        <td>{{ u.role.value }}</td>
+        <td>
+          {% if u.role.value == 'ijrochi' %}
+          <form method="POST" action="{{ url_for('admin.set_staff_departments', user_id=u.id) }}" style="display:flex; gap:6px; align-items:flex-start;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="department_ids" multiple size="3" style="padding:6px 8px; border-radius:8px; border:1px solid var(--border); min-width:170px;">
+              {% for d in departments %}
+              <option value="{{ d.id }}" {{ 'selected' if d in u.departments }}>{{ d.name }}</option>
+              {% endfor %}
+            </select>
+            <button class="btn btn-outline" type="submit" style="padding:6px 10px; font-size:11px;">Saqlash</button>
+          </form>
+          <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">
+            {{ u.departments|map(attribute='name')|join(', ') if u.departments else 'Yo\'nalish biriktirilmagan' }}
+          </div>
+          {% else %}
+          <form method="POST" action="{{ url_for('admin.set_staff_department', user_id=u.id) }}" style="display:flex; gap:6px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="department_id" onchange="this.form.submit()" style="padding:6px 8px; border-radius:8px; border:1px solid var(--border);">
+              <option value="">— bog'lanmagan —</option>
+              {% for d in departments %}
+              <option value="{{ d.id }}" {{ 'selected' if u.department_id == d.id }}>{{ d.name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+          {% endif %}
+        </td>
+        <td>
+          {% if u.role.value == 'ijrochi' %}
+          <form method="POST" action="{{ url_for('admin.set_staff_buildings', user_id=u.id) }}" style="display:flex; gap:6px; align-items:flex-start;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="building_ids" multiple size="2" style="padding:6px 8px; border-radius:8px; border:1px solid var(--border); min-width:150px;">
+              {% for b in buildings %}
+              <option value="{{ b.id }}" {{ 'selected' if b in u.buildings }}>{{ b.name }}</option>
+              {% endfor %}
+            </select>
+            <button class="btn btn-outline" type="submit" style="padding:6px 10px; font-size:11px;">Saqlash</button>
+          </form>
+          <div style="font-size:11px; color:var(--text-dim); margin-top:4px;">
+            {{ u.buildings|map(attribute='name')|join(', ') if u.buildings else 'Bino biriktirilmagan' }}
+          </div>
+          {% else %}
+          -
+          {% endif %}
+        </td>
+        <td>{{ u.workload }}</td>
+        <td>{{ 'Faol' if u.is_active_flag else 'Bloklangan' }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin.toggle_staff', user_id=u.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-outline" type="submit">{{ 'Bloklash' if u.is_active_flag else 'Faollashtirish' }}</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <radialGradient id="glow-c4" cx="50%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#101a3d"/>
+      <stop offset="100%" stop-color="#05060f"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#glow-c4)"/>
+  <g stroke="#00e5ff" stroke-width="1.4" opacity="0.35" fill="none">
+    <path d="M0,150 H400 V300 H700 V150 H1100 V400 H1600"/>
+    <path d="M0,450 H250 V600 H600 V500 H950 V650 H1600"/>
+    <path d="M0,750 H350 V800 H800 V700 H1200 V800 H1600"/>
+    <path d="M200,0 V200 H500 V0"/>
+    <path d="M900,0 V120 H1300 V0"/>
+    <path d="M150,900 V780 H450 V900"/>
+    <path d="M1100,900 V820 H1450 V900"/>
+  </g>
+  <g fill="#00e5ff" opacity="0.85">
+    <circle cx="400" cy="300" r="5"/>
+    <circle cx="700" cy="150" r="4"/>
+    <circle cx="1100" cy="400" r="5"/>
+    <circle cx="250" cy="600" r="4"/>
+    <circle cx="950" cy="650" r="5"/>
+    <circle cx="500" cy="200" r="4"/>
+    <circle cx="1300" cy="120" r="4"/>
+  </g>
+  <g fill="#ff2bd6" opacity="0.85">
+    <circle cx="600" cy="500" r="5"/>
+    <circle cx="800" cy="700" r="4"/>
+    <circle cx="1200" cy="800" r="5"/>
+    <circle cx="350" cy="800" r="4"/>
+    <circle cx="1450" cy="820" r="4"/>
+  </g>
+  <g fill="#39ff8c" opacity="0.6">
+    <circle cx="150" cy="780" r="4"/>
+    <circle cx="950" cy="150" r="4"/>
+  </g>
+  <circle cx="800" cy="380" r="260" fill="none" stroke="#00e5ff" stroke-width="1" opacity="0.15"/>
+  <circle cx="800" cy="380" r="180" fill="none" stroke="#ff2bd6" stroke-width="1" opacity="0.12"/>
+</svg>

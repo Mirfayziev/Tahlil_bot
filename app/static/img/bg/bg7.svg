@@ -1,0 +1,35 @@
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky7" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffd9a0"/>
+      <stop offset="45%" stop-color="#ff9d7a"/>
+      <stop offset="100%" stop-color="#c9678a"/>
+    </linearGradient>
+    <linearGradient id="lake7" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e79a8c"/>
+      <stop offset="100%" stop-color="#6a4b6e"/>
+    </linearGradient>
+    <radialGradient id="sun7" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff2cf"/>
+      <stop offset="100%" stop-color="#fff2cf" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky7)"/>
+  <circle cx="800" cy="360" r="230" fill="url(#sun7)"/>
+  <circle cx="800" cy="360" r="95" fill="#fff0c2"/>
+  <path d="M0,420 L220,300 L420,400 L640,290 L860,410 L1080,300 L1300,400 L1600,320 L1600,470 L0,470 Z" fill="#7a5a72" opacity="0.55"/>
+  <path d="M0,470 L260,370 L500,460 L760,350 L1020,460 L1280,360 L1600,450 L1600,500 L0,500 Z" fill="#5a3f5e" opacity="0.75"/>
+  <rect y="500" width="1600" height="400" fill="url(#lake7)"/>
+  <path d="M0,530 L220,600 L420,540 L640,610 L860,545 L1080,610 L1300,545 L1600,590 L1600,540 L0,540 Z" fill="#7a5a72" opacity="0.3"/>
+  <path d="M0,560 L260,620 L500,570 L760,630 L1020,570 L1280,625 L1600,580 L1600,560 L0,560 Z" fill="#5a3f5e" opacity="0.35"/>
+  <ellipse cx="800" cy="560" rx="90" ry="34" fill="#fff2cf" opacity="0.4"/>
+  <g fill="#241a2e" opacity="0.7">
+    <path d="M120,250 q18,-14 36,0 q18,-14 36,0" stroke="#241a2e" stroke-width="3" fill="none"/>
+    <path d="M260,210 q16,-12 32,0 q16,-12 32,0" stroke="#241a2e" stroke-width="3" fill="none"/>
+    <path d="M1200,230 q16,-12 32,0 q16,-12 32,0" stroke="#241a2e" stroke-width="3" fill="none"/>
+  </g>
+  <g fill="#3d2b46" opacity="0.85">
+    <path d="M60,900 L60,700 Q100,650 140,700 L140,900 Z"/>
+    <path d="M1480,900 L1480,650 Q1530,590 1580,650 L1580,900 Z"/>
+  </g>
+</svg>

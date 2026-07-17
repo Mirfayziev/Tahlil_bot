@@ -1,0 +1,34 @@
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky5" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#cdeffd"/>
+      <stop offset="55%" stop-color="#ddf7ec"/>
+      <stop offset="100%" stop-color="#eafff0"/>
+    </linearGradient>
+    <radialGradient id="sun5" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fff9d6"/>
+      <stop offset="100%" stop-color="#fff9d6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky5)"/>
+  <circle cx="1300" cy="180" r="180" fill="url(#sun5)"/>
+  <circle cx="1300" cy="180" r="70" fill="#fff6bf"/>
+  <path d="M0,560 C260,500 500,580 780,530 C1040,485 1300,560 1600,520 L1600,900 L0,900 Z" fill="#a9dfb0" opacity="0.55"/>
+  <path d="M0,650 C300,610 560,680 840,640 C1100,605 1360,670 1600,630 L1600,900 L0,900 Z" fill="#7fcf95" opacity="0.7"/>
+  <path d="M0,740 C320,715 580,770 860,745 C1120,722 1360,765 1600,745 L1600,900 L0,900 Z" fill="#57ba7c" opacity="0.85"/>
+  <g fill="#ffffff" opacity="0.85">
+    <circle cx="220" cy="200" r="5"/>
+    <circle cx="300" cy="260" r="4"/>
+    <circle cx="420" cy="150" r="5"/>
+    <circle cx="120" cy="320" r="4"/>
+    <circle cx="600" cy="220" r="5"/>
+    <circle cx="760" cy="300" r="4"/>
+    <circle cx="850" cy="160" r="5"/>
+  </g>
+  <g fill="#ffc9de" opacity="0.8">
+    <circle cx="260" cy="230" r="3"/>
+    <circle cx="470" cy="190" r="3"/>
+    <circle cx="700" cy="260" r="3"/>
+    <circle cx="150" cy="270" r="3"/>
+  </g>
+</svg>

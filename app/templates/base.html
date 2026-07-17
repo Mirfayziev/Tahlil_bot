@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Xizmat Platformasi{% endblock %}</title>
+<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+<link rel="apple-touch-icon" href="{{ url_for('static', filename='img/favicon-180.png') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<script src="{{ url_for('static', filename='js/chart.umd.min.js') }}"></script>
+</head>
+<body>
+<div class="bg-decor" aria-hidden="true" style="background-image:url('{{ url_for('static', filename='img/bg/' ~ bg_scene) }}')">
+  <span class="blob blob-1"></span>
+  <span class="blob blob-2"></span>
+  <span class="blob blob-3"></span>
+</div>
+{% if current_user.is_authenticated %}
+{% if current_user.role.value in ['super_admin','administrator','dispatcher','bolim_rahbari'] %}
+<div class="notif-widget" id="notifWidget"
+     data-feed-url="{{ url_for('dispatcher.new_requests_feed') }}"
+     data-detail-base="{{ url_for('dispatcher.request_detail', req_id=0) }}">
+  <button class="notif-bell" id="notifBellBtn" type="button" title="Bildirishnomalar">
+    <span class="notif-bell-icon">🔔</span>
+    <span class="notif-badge" id="notifBadge" hidden>0</span>
+  </button>
+  <div class="notif-panel" id="notifPanel" hidden>
+    <div class="notif-panel-header">
+      <strong>Yangi murojaatlar</strong>
+      <button class="notif-settings-btn" id="notifSettingsBtn" type="button" title="Ovoz sozlamalari">⚙</button>
+    </div>
+    <div class="notif-settings" id="notifSettings" hidden>
+      <label for="notifSoundSelect">Ovoz</label>
+      <select id="notifSoundSelect">
+        <option value="bell">🔔 Qo'ng'iroq</option>
+        <option value="chime">🎵 Kuy</option>
+        <option value="beep">📟 Bip</option>
+        <option value="pop">🔘 Pop</option>
+        <option value="none">🔇 O'chirilgan</option>
+      </select>
+      <label for="notifVolumeRange">Balandlik</label>
+      <input type="range" id="notifVolumeRange" min="0" max="1" step="0.05">
+      <button type="button" class="btn btn-outline" id="notifTestBtn">Sinab ko'rish</button>
+    </div>
+    <div class="notif-list" id="notifList">
+      <div class="notif-empty">Hozircha yangi murojaat yo'q.</div>
+    </div>
+  </div>
+</div>
+<script src="{{ url_for('static', filename='js/notifications.js') }}" defer></script>
+{% endif %}
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <img src="{{ url_for('static', filename='img/logo-icon.png') }}" alt="Logo" class="brand-icon">
+      <span class="brand-text">Xizmat Platformasi</span>
+    </div>
+    <nav>
+      <a href="{{ url_for('dashboard.index') }}" class="{{ 'active' if request.endpoint=='dashboard.index' }}"><span class="nav-icon">📊</span>Boshqaruv paneli</a>
+      <a href="{{ url_for('dispatcher.requests_list') }}" class="{{ 'active' if 'dispatcher' in request.endpoint }}"><span class="nav-icon">📋</span>Murojaatlar</a>
+      <a href="{{ url_for('dashboard.ratings_list') }}" class="{{ 'active' if request.endpoint=='dashboard.ratings_list' }}"><span class="nav-icon">⭐</span>Baholar</a>
+      {% if current_user.role.value in ['super_admin','administrator'] %}
+      <a href="{{ url_for('admin.categories') }}" class="{{ 'active' if request.endpoint=='admin.categories' }}"><span class="nav-icon">🗂️</span>Kategoriyalar</a>
+      <a href="{{ url_for('admin.staff') }}" class="{{ 'active' if request.endpoint=='admin.staff' }}"><span class="nav-icon">👥</span>Xodimlar</a>
+      <a href="{{ url_for('admin.departments') }}" class="{{ 'active' if request.endpoint=='admin.departments' }}"><span class="nav-icon">🏢</span>Bo'limlar</a>
+      <a href="{{ url_for('admin.buildings') }}" class="{{ 'active' if request.endpoint=='admin.buildings' }}"><span class="nav-icon">🏛️</span>Binolar</a>
+      {% endif %}
+      <a href="{{ url_for('reports.index') }}" class="{{ 'active' if 'reports' in request.endpoint }}"><span class="nav-icon">📈</span>Hisobotlar</a>
+      {% if current_user.role.value == 'super_admin' %}
+      <a href="{{ url_for('admin.audit_log') }}" class="{{ 'active' if request.endpoint=='admin.audit_log' }}"><span class="nav-icon">🕵️</span>Audit jurnali</a>
+      {% endif %}
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar">{{ current_user.full_name[0] }}</div>
+        <div>
+          <div class="user-name">{{ current_user.full_name }}</div>
+          <div class="user-role">{{ current_user.role.value }}</div>
+        </div>
+      </div>
+      <a href="{{ url_for('auth.logout') }}" class="logout-btn">Chiqish</a>
+    </div>
+  </aside>
+  <main class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="flash-stack">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+{% else %}
+  {% block auth_content %}{% endblock %}
+{% endif %}
+</body>
+</html>

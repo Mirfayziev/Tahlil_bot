@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}{{ req.number }}{% endblock %}
+{% block content %}
+<h2>{{ req.number }} <span class="badge badge-{{ req.status.value }}">{{ req.status.value }}</span></h2>
+
+<div class="card">
+  <h3>Murojatchi</h3>
+  <p><b>F.I.Sh:</b> {{ req.customer.full_name or '-' }}</p>
+  <p><b>Telefon:</b> {{ req.customer.phone or '-' }}</p>
+</div>
+
+<div class="card">
+  <h3>Murojaat ma'lumotlari</h3>
+  <p><b>Kategoriya:</b> {{ req.category.name_uz }}</p>
+  <p><b>Bino:</b> {{ req.building.name if req.building else '-' }}</p>
+  <p><b>Tavsif:</b> {{ req.description }}</p>
+  <p><b>Bo'linma:</b> {{ req.org_display }}</p>
+  {% if req.address_text %}<p><b>Qo'shimcha manzil:</b> {{ req.address_text }}</p>{% endif %}
+  <p><b>Ustuvorlik:</b> <span class="priority-{{ req.priority.value if req.priority else 'orta' }}">{{ req.priority.value if req.priority else '-' }}</span></p>
+  <p><b>Yaratilgan:</b> {{ req.created_at.strftime('%d.%m.%Y %H:%M') }}</p>
+  <p><b>Muddat:</b> {{ req.deadline_at.strftime('%d.%m.%Y %H:%M') if req.deadline_at else '-' }}
+    {% if req.is_overdue %}<span class="badge badge-rad_etildi">MUDDAT O'TDI</span>{% endif %}</p>
+
+  {% if req.attachments %}
+  <p><b>Fayllar:</b></p>
+  <ul>{% for a in req.attachments %}<li>{{ a.file_type }} ({{ a.stage }}) — {{ a.file_ref }}</li>{% endfor %}</ul>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h3>🤖 AI tahlili</h3>
+  {% if req.ai_summary %}
+    <p><b>Xulosa:</b> {{ req.ai_summary }}</p>
+    <p><b>Tavsiya etilgan javob:</b> {{ req.ai_draft_reply }}</p>
+    {% if req.ai_suggested_priority %}<p><b>AI ustuvorlik tavsiyasi:</b> {{ req.ai_suggested_priority.value }}</p>{% endif %}
+  {% else %}
+    <p style="color:var(--text-dim);">AI tahlili hali amalga oshirilmagan.</p>
+  {% endif %}
+  <form method="POST" action="{{ url_for('dispatcher.reanalyze_ai', req_id=req.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-outline" type="submit">AI bilan qayta tahlil qilish</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Amallar</h3>
+  <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+    {% if req.status.value == 'yangi' %}
+    <form method="POST" action="{{ url_for('dispatcher.accept_request', req_id=req.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-green" type="submit">Qabul qilish</button>
+    </form>
+    <form method="POST" action="{{ url_for('dispatcher.reject_request', req_id=req.id) }}" style="display:flex; gap:6px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="text" name="reason" placeholder="Rad etish sababi" required>
+      <button class="btn btn-red" type="submit">Rad etish</button>
+    </form>
+    {% endif %}
+    {% if req.status.value == 'bajarildi' %}
+    <form method="POST" action="{{ url_for('dispatcher.close_request', req_id=req.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-green" type="submit">Yopish</button>
+    </form>
+    {% endif %}
+  </div>
+
+  {% if req.status.value in ['qabul_qilindi', 'ijrochiga_yuborildi'] %}
+  <h4>Ijrochiga tayinlash</h4>
+  {% if unscoped_fallback %}
+  <p class="flash flash-warning">
+    Bu kategoriya ("{{ req.category.name_uz }}") hali biror bo'limga bog'lanmagan —
+    shuning uchun pastda <b>barcha</b> ijrochilar ko'rsatilmoqda. To'g'ri yo'nalishga
+    biriktirish uchun Admin → Kategoriyalar bo'limida ushbu kategoriyaga tegishli
+    Bo'limni belgilang.
+  </p>
+  {% elif not executors %}
+  <p class="flash flash-warning">
+    "{{ req.category.name_uz }}" yo'nalishiga biriktirilgan faol ijrochi topilmadi.
+    Admin → Xodimlar bo'limida tegishli ijrochiga bu bo'limni belgilang.
+  </p>
+  {% endif %}
+  {% if req.building and unscoped_building %}
+  <p class="flash flash-warning">
+    "{{ req.building.name }}" binosiga hali hech qanday ijrochi biriktirilmagan —
+    shuning uchun bino bo'yicha cheklov qo'llanilmadi. Admin → Xodimlar bo'limida
+    tegishli ijrochiga bu binoni belgilang.
+  </p>
+  {% endif %}
+  <form method="POST" action="{{ url_for('dispatcher.assign_request', req_id=req.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <select name="executor_ids" multiple size="5" style="width:100%; margin-bottom:10px;">
+      {% for e in executors %}
+      <option value="{{ e.id }}">{{ e.full_name }} — {{ e.position or '' }} (yuklama: {{ e.workload }})</option>
+      {% endfor %}
+    </select>
+    <input type="datetime-local" name="deadline">
+    <button class="btn" type="submit">Tayinlash</button>
+  </form>
+  {% endif %}
+
+  <h4>Izoh qo'shish</h4>
+  <form method="POST" action="{{ url_for('dispatcher.add_comment', req_id=req.id) }}" style="display:flex; gap:6px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="text" name="comment" placeholder="Izoh" style="flex:1;" required>
+    <button class="btn btn-outline" type="submit">Qo'shish</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Holat tarixi</h3>
+  <table>
+    <thead><tr><th>Vaqt</th><th>Eski holat</th><th>Yangi holat</th><th>Izoh</th></tr></thead>
+    <tbody>
+      {% for log in req.status_logs|sort(attribute='created_at', reverse=True) %}
+      <tr style="--i: {{ loop.index }}">
+        <td>{{ log.created_at.strftime('%d.%m %H:%M') }}</td>
+        <td>{{ log.old_status or '-' }}</td>
+        <td>{{ log.new_status }}</td>
+        <td>{{ log.comment or '-' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

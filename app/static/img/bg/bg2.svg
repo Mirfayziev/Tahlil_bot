@@ -1,0 +1,35 @@
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0b1033"/>
+      <stop offset="55%" stop-color="#1c1f4d"/>
+      <stop offset="100%" stop-color="#2c2a5e"/>
+    </linearGradient>
+    <radialGradient id="moonglow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#eef2ff" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#eef2ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky2)"/>
+  <g fill="#ffffff">
+    <circle cx="120" cy="120" r="2.2" opacity="0.9"/>
+    <circle cx="260" cy="200" r="1.6" opacity="0.7"/>
+    <circle cx="400" cy="90" r="2" opacity="0.8"/>
+    <circle cx="560" cy="170" r="1.4" opacity="0.6"/>
+    <circle cx="700" cy="110" r="2.4" opacity="0.9"/>
+    <circle cx="850" cy="230" r="1.6" opacity="0.65"/>
+    <circle cx="980" cy="80" r="2" opacity="0.85"/>
+    <circle cx="1300" cy="150" r="2.2" opacity="0.8"/>
+    <circle cx="1420" cy="260" r="1.6" opacity="0.6"/>
+    <circle cx="1520" cy="100" r="2" opacity="0.85"/>
+    <circle cx="180" cy="320" r="1.4" opacity="0.55"/>
+    <circle cx="900" cy="330" r="1.5" opacity="0.55"/>
+    <circle cx="1150" cy="300" r="1.8" opacity="0.7"/>
+    <circle cx="60" cy="260" r="1.4" opacity="0.5"/>
+  </g>
+  <circle cx="1250" cy="220" r="150" fill="url(#moonglow)"/>
+  <circle cx="1250" cy="220" r="75" fill="#f4f2ea"/>
+  <circle cx="1290" cy="195" r="70" fill="#2c2a5e"/>
+  <path d="M0,650 C260,610 480,660 720,630 C960,600 1180,650 1420,620 C1500,612 1560,625 1600,618 L1600,900 L0,900 Z" fill="#171a3f" opacity="0.75"/>
+  <path d="M0,740 C300,715 560,760 820,735 C1080,712 1340,755 1600,730 L1600,900 L0,900 Z" fill="#0c0e28" opacity="0.9"/>
+</svg>

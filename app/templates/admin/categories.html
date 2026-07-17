@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Kategoriyalar{% endblock %}
+{% block content %}
+<h2>🗂️ Xizmat kategoriyalari</h2>
+
+<div class="card">
+  <h3>Yangi kategoriya qo'shish</h3>
+  <form method="POST" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="text" name="name_uz" placeholder="Nomi (o'zbekcha)" required>
+    <input type="text" name="name_ru" placeholder="Nomi (ruscha)">
+    <input type="text" name="name_en" placeholder="Nomi (inglizcha)">
+    <select name="parent_id">
+      <option value="">— Asosiy kategoriya —</option>
+      {% for c in top_level %}
+      <option value="{{ c.id }}">{{ c.name_uz }}</option>
+      {% endfor %}
+    </select>
+    <select name="department_id">
+      <option value="">— Tegishli bo'lim (AI avtomatik yo'naltirish uchun) —</option>
+      {% for d in departments %}
+      <option value="{{ d.id }}">{{ d.name }}</option>
+      {% endfor %}
+    </select>
+    <select name="default_priority">
+      <option value="orta">O'rta ustuvorlik</option>
+      <option value="shoshilinch">Shoshilinch</option>
+      <option value="yuqori">Yuqori</option>
+      <option value="past">Past</option>
+    </select>
+    <input type="number" name="default_sla_hours" placeholder="SLA (soat)" value="24">
+    <textarea name="description" placeholder="Tavsif" style="grid-column: span 3;"></textarea>
+    <button class="btn" type="submit" style="grid-column: span 3;">Qo'shish</button>
+  </form>
+</div>
+
+<div class="card">
+  <table>
+    <thead><tr><th>Nomi</th><th>Kichik kategoriya</th><th>Bo'lim</th><th>Ustuvorlik</th><th>SLA</th><th>Holat</th><th></th></tr></thead>
+    <tbody>
+      {% for c in categories %}
+      <tr style="--i: {{ loop.index }}">
+        <td>{{ c.name_uz }}</td>
+        <td>{{ c.parent.name_uz if c.parent else '-' }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin.set_category_department', cat_id=c.id) }}" style="display:flex; gap:6px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select name="department_id" onchange="this.form.submit()" style="padding:6px 8px; border-radius:8px; border:1px solid var(--border);">
+              <option value="">— bog'lanmagan —</option>
+              {% for d in departments %}
+              <option value="{{ d.id }}" {{ 'selected' if c.department_id == d.id }}>{{ d.name }}</option>
+              {% endfor %}
+            </select>
+          </form>
+        </td>
+        <td>{{ c.default_priority.value if c.default_priority else '-' }}</td>
+        <td>{{ c.default_sla_hours }} soat</td>
+        <td>{{ 'Faol' if c.is_active else 'Faol emas' }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin.toggle_category', cat_id=c.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-outline" type="submit">{{ 'O\'chirish' if c.is_active else 'Yoqish' }}</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

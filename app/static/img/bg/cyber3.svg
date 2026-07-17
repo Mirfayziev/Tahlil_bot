@@ -1,0 +1,59 @@
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="sky-c3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#04050c"/>
+      <stop offset="100%" stop-color="#0c1230"/>
+    </linearGradient>
+    <linearGradient id="street-c3" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0a0d1c"/>
+      <stop offset="100%" stop-color="#161b33"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky-c3)"/>
+  <g fill="#080a18" opacity="0.95">
+    <rect x="40" y="220" width="180" height="380"/>
+    <rect x="240" y="160" width="140" height="440"/>
+    <rect x="400" y="260" width="160" height="340"/>
+    <rect x="1080" y="200" width="150" height="400"/>
+    <rect x="1240" y="140" width="130" height="460"/>
+    <rect x="1390" y="240" width="170" height="360"/>
+  </g>
+  <g fill="#00e5ff" opacity="0.8">
+    <rect x="60" y="250" width="12" height="16"/>
+    <rect x="90" y="250" width="12" height="16"/>
+    <rect x="60" y="290" width="12" height="16"/>
+    <rect x="130" y="290" width="12" height="16"/>
+    <rect x="60" y="330" width="12" height="16"/>
+    <rect x="260" y="190" width="10" height="14"/>
+    <rect x="290" y="220" width="10" height="14"/>
+    <rect x="260" y="250" width="10" height="14"/>
+    <rect x="1100" y="230" width="11" height="15"/>
+    <rect x="1130" y="260" width="11" height="15"/>
+  </g>
+  <g fill="#ff2bd6" opacity="0.8">
+    <rect x="420" y="290" width="10" height="14"/>
+    <rect x="450" y="320" width="10" height="14"/>
+    <rect x="420" y="350" width="10" height="14"/>
+    <rect x="1410" y="270" width="10" height="14"/>
+    <rect x="1440" y="300" width="10" height="14"/>
+    <rect x="1260" y="170" width="10" height="14"/>
+    <rect x="1290" y="200" width="10" height="14"/>
+  </g>
+  <g fill="none" stroke="#ff2bd6" stroke-width="4" opacity="0.9">
+    <rect x="440" y="430" width="120" height="46" rx="6"/>
+  </g>
+  <text x="450" y="461" font-family="Arial, sans-serif" font-size="26" fill="#ff2bd6" opacity="0.9">NEON</text>
+  <rect y="600" width="1600" height="300" fill="url(#street-c3)"/>
+  <g stroke="#00e5ff" stroke-width="2" opacity="0.4">
+    <line x1="800" y1="600" x2="200" y2="900"/>
+    <line x1="800" y1="600" x2="800" y2="900"/>
+    <line x1="800" y1="600" x2="1400" y2="900"/>
+  </g>
+  <g fill="#ff2bd6" opacity="0.25">
+    <ellipse cx="500" cy="700" rx="90" ry="18"/>
+    <ellipse cx="1050" cy="760" rx="110" ry="20"/>
+  </g>
+  <g fill="#00e5ff" opacity="0.2">
+    <ellipse cx="800" cy="820" rx="140" ry="24"/>
+  </g>
+</svg>

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Hisobotlar{% endblock %}
+{% block content %}
+<h2>📈 Hisobotlar</h2>
+<div class="card">
+  <form class="filters" method="GET" action="{{ url_for('reports.export_excel') }}" id="reportForm">
+    <input type="date" name="date_from">
+    <input type="date" name="date_to">
+    <select name="status">
+      <option value="">Barcha holatlar</option>
+      <option value="yangi">Yangi</option>
+      <option value="bajarildi">Bajarildi</option>
+      <option value="yopildi">Yopildi</option>
+      <option value="rad_etildi">Rad etildi</option>
+    </select>
+  </form>
+  <div style="display:flex; gap:10px;">
+    <button class="btn btn-green" onclick="document.getElementById('reportForm').action='{{ url_for('reports.export_excel') }}'; document.getElementById('reportForm').submit();">📊 Excel yuklab olish</button>
+    <button class="btn btn-red" onclick="document.getElementById('reportForm').action='{{ url_for('reports.export_pdf') }}'; document.getElementById('reportForm').submit();">📄 PDF yuklab olish</button>
+  </div>
+</div>
+{% endblock %}

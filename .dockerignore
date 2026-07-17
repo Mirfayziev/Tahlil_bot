@@ -1,0 +1,15 @@
+venv/
+__pycache__/
+*.pyc
+.git/
+.env
+local.db
+instance/
+uploads/*
+!uploads/.gitkeep
+*.log
+.pytest_cache/
+htmlcov/
+.coverage
+mobile/build/
+node_modules/

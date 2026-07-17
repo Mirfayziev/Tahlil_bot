@@ -19,10 +19,20 @@ class ApiClient:
 
     async def _request(self, method: str, path: str, **kwargs):
         url = f"{self.base_url}{path}"
-        async with aiohttp.ClientSession(headers=HEADERS) as session:
-            async with session.request(method, url, **kwargs) as resp:
-                data = await resp.json()
-                return resp.status, data
+        try:
+            timeout = aiohttp.ClientTimeout(total=10)
+            async with aiohttp.ClientSession(headers=HEADERS, timeout=timeout) as session:
+                async with session.request(method, url, **kwargs) as resp:
+                    try:
+                        data = await resp.json()
+                    except aiohttp.ContentTypeError:
+                        data = {}
+                    return resp.status, data
+        except (aiohttp.ClientError, TimeoutError):
+            # Tarmoq/timeout xatoligi — chaqiruvchi joyda status!=200 sifatida
+            # ko'rinadi va foydalanuvchiga tushunarli xabar ko'rsatiladi (bot
+            # hech qanday javob bermay "osilib qolish" o'rniga).
+            return 0, {}
 
     # --- Mijoz (Bot №1) ---
     async def upsert_customer(self, telegram_id, full_name=None, phone=None, language="uz"):

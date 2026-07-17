@@ -146,11 +146,34 @@ async def receive_phone_text(message: Message, state: FSMContext):
     )
 
 
+async def _prompt_category(message: Message, state: FSMContext):
+    status, cats = await api_client.list_categories()
+    if status != 200 or not cats:
+        await message.answer("Kategoriyalarni yuklashda xatolik yuz berdi. Birozdan so'ng qayta urinib ko'ring.")
+        return
+
+    await state.update_data(categories={str(c["id"]): c["name"] for c in cats})
+    kb = ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text=c["name"])] for c in cats] + [[KeyboardButton(text=CANCEL_BTN)]],
+        resize_keyboard=True,
+    )
+    await state.set_state(NewRequestFSM.choosing_category)
+    await message.answer("Xizmat turini tanlang:", reply_markup=kb)
+
+
 @dp.message(F.text == "🆕 Yangi murojaat")
 async def new_request_start(message: Message, state: FSMContext):
     status, buildings = await api_client.list_buildings()
-    if status != 200 or not buildings:
+    if status != 200:
         await message.answer("Binolar ro'yxatini yuklashda xatolik yuz berdi. Birozdan so'ng qayta urinib ko'ring.")
+        return
+
+    if not buildings:
+        # Tizimda hali binolar ro'yxatga kiritilmagan — bu murojaat qoldirishga
+        # to'sqinlik qilmasligi kerak, shuning uchun bino tanlash bosqichini
+        # o'tkazib yuborib, to'g'ridan-to'g'ri xizmat turini so'raymiz.
+        await state.update_data(buildings={})
+        await _prompt_category(message, state)
         return
 
     await state.update_data(buildings={str(b["id"]): b["name"] for b in buildings})
@@ -173,19 +196,7 @@ async def choose_building(message: Message, state: FSMContext):
         return
 
     await state.update_data(building_id=building_id, building_name=message.text)
-
-    status, cats = await api_client.list_categories()
-    if status != 200 or not cats:
-        await message.answer("Kategoriyalarni yuklashda xatolik yuz berdi. Birozdan so'ng qayta urinib ko'ring.")
-        return
-
-    await state.update_data(categories={str(c["id"]): c["name"] for c in cats})
-    kb = ReplyKeyboardMarkup(
-        keyboard=[[KeyboardButton(text=c["name"])] for c in cats] + [[KeyboardButton(text=CANCEL_BTN)]],
-        resize_keyboard=True,
-    )
-    await state.set_state(NewRequestFSM.choosing_category)
-    await message.answer("Xizmat turini tanlang:", reply_markup=kb)
+    await _prompt_category(message, state)
 
 
 @dp.message(NewRequestFSM.choosing_category)

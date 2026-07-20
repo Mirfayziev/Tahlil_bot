@@ -50,6 +50,12 @@ def create_app(config_class=Config):
     # shuning uchun brauzer-sessiyasiga mo'ljallangan CSRF tekshiruvi ularga tegishli emas.
     csrf.exempt(api_bp)
 
+    # Ichki bot API'si (X-Internal-Token bilan allaqachon himoyalangan) dashboard/admin
+    # brauzer-so'rovlari bilan bitta umumiy 200/daqiqa limitini bo'lishmasligi kerak —
+    # bir nechta bot (customer/executor) ketma-ket bir necha so'rov yuborishi mumkin va
+    # bu haqiqiy ishlatishda ham limitga tez tegib qolishga olib kelgan edi.
+    limiter.limit("1000 per minute")(api_bp)
+
     from app.api.v1 import api_v1_bp
     app.register_blueprint(api_v1_bp, url_prefix="/api/v1")
     # v1 API JWT (Bearer token) orqali autentifikatsiya qiladi, sessiya cookie'siga

@@ -107,7 +107,7 @@ async def cmd_start(message: Message, state: FSMContext):
     if not result.get("phone"):
         await state.set_state(OnboardingFSM.entering_phone)
         await message.answer(
-            "Assalomu alaykum! Ishlat boshqarmasi xizmat ko'rsatish botiga xush kelibsiz.\n\n"
+            "Assalomu alaykum! Ishlar boshqarmasi xizmat ko'rsatish botiga xush kelibsiz.\n\n"
             "Davom etishdan oldin, iltimos telefon raqamingizni yuboring "
             "(pastdagi tugma orqali ulashishingiz yoki qo'lda yozishingiz mumkin):",
             reply_markup=PHONE_MENU,

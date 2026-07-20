@@ -94,7 +94,17 @@ async def cmd_start(message: Message, state: FSMContext):
         language=message.from_user.language_code or "uz",
     )
 
-    if status == 200 and not result.get("phone"):
+    if status != 200:
+        # Mijoz serverda ro'yxatga olinmagan bo'lsa, asosiy menyuni ko'rsatib
+        # "hammasi joyida" deb aldash o'rniga xatolikni bildiramiz - aks holda
+        # keyinroq "Yangi murojaat" yaratishda backend mijozni topolmay,
+        # foydalanuvchi tushunarsiz xatolikka duch keladi.
+        await message.answer(
+            "Ulanishda vaqtinchalik xatolik yuz berdi. Iltimos, /start buyrug'ini qayta yuboring."
+        )
+        return
+
+    if not result.get("phone"):
         await state.set_state(OnboardingFSM.entering_phone)
         await message.answer(
             "Assalomu alaykum! Xizmat ko'rsatish botiga xush kelibsiz.\n\n"
@@ -124,26 +134,38 @@ async def cancel_any(message: Message, state: FSMContext):
 
 @dp.message(OnboardingFSM.entering_phone, F.contact)
 async def receive_phone_contact(message: Message, state: FSMContext):
-    await api_client.upsert_customer(
+    status, _ = await api_client.upsert_customer(
         telegram_id=str(message.from_user.id), phone=message.contact.phone_number
     )
     await state.clear()
-    await message.answer(
-        "Rahmat! Endi murojaat qoldirishingiz mumkin.",
-        reply_markup=MAIN_MENU,
-    )
+    if status == 200:
+        await message.answer(
+            "Rahmat! Endi murojaat qoldirishingiz mumkin.",
+            reply_markup=MAIN_MENU,
+        )
+    else:
+        await message.answer(
+            "Telefon raqamni saqlashda xatolik yuz berdi. Iltimos, /start buyrug'ini qayta yuboring.",
+            reply_markup=MAIN_MENU,
+        )
 
 
 @dp.message(OnboardingFSM.entering_phone)
 async def receive_phone_text(message: Message, state: FSMContext):
-    await api_client.upsert_customer(
+    status, _ = await api_client.upsert_customer(
         telegram_id=str(message.from_user.id), phone=message.text.strip()
     )
     await state.clear()
-    await message.answer(
-        "Rahmat! Endi murojaat qoldirishingiz mumkin.",
-        reply_markup=MAIN_MENU,
-    )
+    if status == 200:
+        await message.answer(
+            "Rahmat! Endi murojaat qoldirishingiz mumkin.",
+            reply_markup=MAIN_MENU,
+        )
+    else:
+        await message.answer(
+            "Telefon raqamni saqlashda xatolik yuz berdi. Iltimos, /start buyrug'ini qayta yuboring.",
+            reply_markup=MAIN_MENU,
+        )
 
 
 async def _prompt_category(message: Message, state: FSMContext):

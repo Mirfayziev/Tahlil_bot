@@ -53,7 +53,10 @@ def notify(recipient_type: str, recipient_id: int, message: str, reply_markup: d
     from app.extensions import db
     from app.models import Notification, Customer, User
 
-    notif = Notification(recipient_type=recipient_type, recipient_id=recipient_id, message=message)
+    notif = Notification(
+        recipient_type=recipient_type, recipient_id=recipient_id, message=message,
+        reply_markup=reply_markup,
+    )
     db.session.add(notif)
 
     ok = False

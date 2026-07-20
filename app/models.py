@@ -349,6 +349,10 @@ class Notification(db.Model):
     recipient_id = db.Column(db.Integer)
     message = db.Column(db.Text, nullable=False)
     channel = db.Column(db.String(20), default="telegram")
+    # Ixtiyoriy Telegram inline keyboard (masalan yulduzcha bilan baholash tugmalari).
+    # Darhol yuborish (notify.py) muvaffaqiyatsiz bo'lsa, fon workeri (notifier.py)
+    # buni saqlangan holda qayta yuborishi uchun bazada saqlanadi.
+    reply_markup = db.Column(db.JSON, nullable=True)
     is_sent = db.Column(db.Boolean, default=False)
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

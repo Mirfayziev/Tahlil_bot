@@ -46,12 +46,15 @@ DEADLINE_WARNING_MINUTES_BEFORE = 60
 app = create_app()
 
 
-async def _send_telegram_message(token: str, chat_id: str, text: str):
+async def _send_telegram_message(token: str, chat_id: str, text: str, reply_markup: dict = None):
     if not token or not chat_id:
         return False
     url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {"chat_id": chat_id, "text": text}
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
     async with aiohttp.ClientSession() as session:
-        async with session.post(url, json={"chat_id": chat_id, "text": text}) as resp:
+        async with session.post(url, json=payload) as resp:
             return resp.status == 200
 
 
@@ -60,19 +63,25 @@ async def _dispatch_notification(notif: Notification) -> bool:
         customer = Customer.query.get(notif.recipient_id)
         if not customer:
             return False
-        return await _send_telegram_message(CUSTOMER_BOT_TOKEN, customer.telegram_id, notif.message)
+        return await _send_telegram_message(
+            CUSTOMER_BOT_TOKEN, customer.telegram_id, notif.message, notif.reply_markup
+        )
 
     if notif.recipient_type == "executor":
         user = User.query.get(notif.recipient_id)
         if not user or not user.telegram_id:
             return False
-        return await _send_telegram_message(EXECUTOR_BOT_TOKEN, user.telegram_id, notif.message)
+        return await _send_telegram_message(
+            EXECUTOR_BOT_TOKEN, user.telegram_id, notif.message, notif.reply_markup
+        )
 
     if notif.recipient_type == "dispatcher":
         user = User.query.get(notif.recipient_id)
         if not user or not user.telegram_id:
             return False
-        return await _send_telegram_message(NOTIFY_BOT_TOKEN or EXECUTOR_BOT_TOKEN, user.telegram_id, notif.message)
+        return await _send_telegram_message(
+            NOTIFY_BOT_TOKEN or EXECUTOR_BOT_TOKEN, user.telegram_id, notif.message, notif.reply_markup
+        )
 
     return False
 

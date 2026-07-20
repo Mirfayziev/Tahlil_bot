@@ -284,7 +284,8 @@ async def skip_video(message: Message, state: FSMContext):
     await message.answer(
         "Departament, Boshqarma (yoki Mustaqil boshqarma), xona va qavatingizni birga yozing "
         "(masalan: «Moliya departamenti, Hisob-kitob boshqarmasi, 215-xona, 2-qavat»):\n\n"
-        "Bekor qilish uchun /bekor yozing."
+        "Bekor qilish uchun /bekor yozing.",
+        reply_markup=ReplyKeyboardRemove(),
     )
 
 
@@ -298,8 +299,7 @@ async def enter_org_unit(message: Message, state: FSMContext):
 async def _finalize_request(message: Message, state: FSMContext):
     data = await state.get_data()
     attachments = data.get("photos", []) + data.get("videos", [])
-
-    status, result = await api_client.create_request(
+    request_kwargs = dict(
         telegram_id=str(message.from_user.id),
         category_id=int(data["category_id"]),
         description=data["description"],
@@ -310,6 +310,20 @@ async def _finalize_request(message: Message, state: FSMContext):
         attachments=attachments,
         building_id=int(data["building_id"]) if data.get("building_id") else None,
     )
+
+    status, result = await api_client.create_request(**request_kwargs)
+
+    if status != 200:
+        # Mijoz Telegram'dagi eski (keshlangan) "Yangi murojaat" tugmasidan /start
+        # yubormasdan foydalangan bo'lishi mumkin - bunda serverda uning mijoz
+        # yozuvi hali yaratilmagan bo'ladi. Uni qayta yaratib, bir marta qayta
+        # urinib ko'ramiz (foydalanuvchini qo'lda /start yuborishga majburlamasdan).
+        await api_client.upsert_customer(
+            telegram_id=str(message.from_user.id),
+            full_name=message.from_user.full_name,
+            language=message.from_user.language_code or "uz",
+        )
+        status, result = await api_client.create_request(**request_kwargs)
 
     await state.clear()
     if status == 200:

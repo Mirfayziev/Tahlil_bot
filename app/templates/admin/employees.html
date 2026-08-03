@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Tashkilot xodimlari{% endblock %}
+{% block content %}
+<h2>🪪 Tashkilot xodimlari (PINFL ro'yxati)</h2>
+<p style="color:var(--text-dim);">
+  Murojaatchi bot orqali xizmatdan foydalanishdan oldin PINFL shu ro'yxat bilan solishtiriladi.
+  Ro'yxatda topilmagan murojaatchi avtomatik bloklanadi —
+  <a href="{{ url_for('admin.blocked_customers') }}">bloklangan murojaatchilar ({{ blocked_count }})</a>.
+</p>
+
+<div class="card">
+  <h3>Qo'lda qo'shish</h3>
+  <form method="POST" style="display:flex; gap:10px; flex-wrap:wrap;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="text" name="full_name" placeholder="F.I.Sh" required style="flex:2;">
+    <input type="text" name="pinfl" placeholder="PINFL (14 raqam)" maxlength="14" required style="flex:1;">
+    <input type="text" name="position" placeholder="Lavozimi (ixtiyoriy)" style="flex:1;">
+    <button class="btn" type="submit">Qo'shish</button>
+  </form>
+</div>
+
+<div class="card">
+  <h3>Excel orqali ommaviy import</h3>
+  <p style="color:var(--text-dim);">Ustunlar tartibi: F.I.Sh | PINFL | Lavozimi (ixtiyoriy). Birinchi qator sarlavha deb hisoblanadi.</p>
+  <form method="POST" action="{{ url_for('admin.import_employees') }}" enctype="multipart/form-data" style="display:flex; gap:10px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="file" name="file" accept=".xlsx" required>
+    <button class="btn" type="submit">Import qilish</button>
+  </form>
+</div>
+
+<div class="card">
+  <table>
+    <thead><tr><th>F.I.Sh</th><th>PINFL</th><th>Lavozimi</th><th>Holat</th><th></th></tr></thead>
+    <tbody>
+      {% for e in employees %}
+      <tr style="--i: {{ loop.index }}">
+        <td>{{ e.full_name }}</td>
+        <td>{{ e.pinfl }}</td>
+        <td>{{ e.position or '-' }}</td>
+        <td>{% if e.is_active %}<span class="badge badge-bajarildi">Faol</span>{% else %}<span class="badge badge-rad_etildi">Nofaol</span>{% endif %}</td>
+        <td style="display:flex; gap:6px;">
+          <form method="POST" action="{{ url_for('admin.toggle_employee', emp_id=e.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-outline" type="submit">{{ 'Nofaollashtirish' if e.is_active else 'Faollashtirish' }}</button>
+          </form>
+          <form method="POST" action="{{ url_for('admin.delete_employee', emp_id=e.id) }}" onsubmit="return confirm('O\'chirishni tasdiqlaysizmi?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-outline" type="submit">O'chirish</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

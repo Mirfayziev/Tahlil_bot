@@ -68,6 +68,13 @@ PHONE_MENU = ReplyKeyboardMarkup(
 
 class OnboardingFSM(StatesGroup):
     entering_phone = State()
+    entering_pinfl = State()
+
+
+BLOCKED_MESSAGE = (
+    "Kechirasiz, siz tashkilot xodimi sifatida tasdiqlanmadingiz, shuning uchun "
+    "bu bot orqali xizmatdan foydalana olmaysiz."
+)
 
 
 class NewRequestFSM(StatesGroup):
@@ -83,6 +90,36 @@ class RatingFSM(StatesGroup):
     choosing_stars = State()
     entering_feedback = State()
     entering_suggestion = State()
+
+
+async def _proceed_after_customer_update(message: Message, state: FSMContext, result: dict):
+    """Mijoz ma'lumoti yangilangandan keyin keyingi bosqichni aniqlaydi:
+    telefon -> PINFL tasdiqlash -> asosiy menyu (yoki bloklangan bo'lsa rad javobi)."""
+    if result.get("is_blocked"):
+        await state.clear()
+        await message.answer(BLOCKED_MESSAGE, reply_markup=ReplyKeyboardRemove())
+        return
+
+    if not result.get("phone"):
+        await state.set_state(OnboardingFSM.entering_phone)
+        await message.answer(
+            "Davom etishdan oldin, iltimos telefon raqamingizni yuboring "
+            "(pastdagi tugma orqali ulashishingiz yoki qo'lda yozishingiz mumkin):",
+            reply_markup=PHONE_MENU,
+        )
+        return
+
+    if not result.get("pinfl_verified"):
+        await state.set_state(OnboardingFSM.entering_pinfl)
+        await message.answer(
+            "Xizmatdan faqat tashkilot xodimlari foydalanishi mumkin. Iltimos, PINFL "
+            "(JSHSHIR, 14 ta raqam) raqamingizni yuboring:",
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        return
+
+    await state.clear()
+    await message.answer("Endi murojaat qoldirishingiz mumkin.", reply_markup=MAIN_MENU)
 
 
 @dp.message(CommandStart())
@@ -104,21 +141,11 @@ async def cmd_start(message: Message, state: FSMContext):
         )
         return
 
-    if not result.get("phone"):
-        await state.set_state(OnboardingFSM.entering_phone)
-        await message.answer(
-            "Assalomu alaykum! Xizmat ko'rsatish botiga xush kelibsiz.\n\n"
-            "Davom etishdan oldin, iltimos telefon raqamingizni yuboring "
-            "(pastdagi tugma orqali ulashishingiz yoki qo'lda yozishingiz mumkin):",
-            reply_markup=PHONE_MENU,
-        )
-        return
-
     await message.answer(
         "Assalomu alaykum! Xizmat ko'rsatish botiga xush kelibsiz.\n\n"
-        "Bu yerda siz texnik va xo'jalik xizmatlari bo'yicha murojaat qoldirishingiz mumkin.",
-        reply_markup=MAIN_MENU,
+        "Bu yerda siz texnik va xo'jalik xizmatlari bo'yicha murojaat qoldirishingiz mumkin."
     )
+    await _proceed_after_customer_update(message, state, result)
 
 
 @dp.message(Command("bekor"))
@@ -134,38 +161,59 @@ async def cancel_any(message: Message, state: FSMContext):
 
 @dp.message(OnboardingFSM.entering_phone, F.contact)
 async def receive_phone_contact(message: Message, state: FSMContext):
-    status, _ = await api_client.upsert_customer(
+    status, result = await api_client.upsert_customer(
         telegram_id=str(message.from_user.id), phone=message.contact.phone_number
     )
-    await state.clear()
-    if status == 200:
-        await message.answer(
-            "Rahmat! Endi murojaat qoldirishingiz mumkin.",
-            reply_markup=MAIN_MENU,
-        )
-    else:
+    if status != 200:
+        await state.clear()
         await message.answer(
             "Telefon raqamni saqlashda xatolik yuz berdi. Iltimos, /start buyrug'ini qayta yuboring.",
             reply_markup=MAIN_MENU,
         )
+        return
+    await message.answer("Rahmat!")
+    await _proceed_after_customer_update(message, state, result)
 
 
 @dp.message(OnboardingFSM.entering_phone)
 async def receive_phone_text(message: Message, state: FSMContext):
-    status, _ = await api_client.upsert_customer(
+    status, result = await api_client.upsert_customer(
         telegram_id=str(message.from_user.id), phone=message.text.strip()
     )
-    await state.clear()
-    if status == 200:
-        await message.answer(
-            "Rahmat! Endi murojaat qoldirishingiz mumkin.",
-            reply_markup=MAIN_MENU,
-        )
-    else:
+    if status != 200:
+        await state.clear()
         await message.answer(
             "Telefon raqamni saqlashda xatolik yuz berdi. Iltimos, /start buyrug'ini qayta yuboring.",
             reply_markup=MAIN_MENU,
         )
+        return
+    await message.answer("Rahmat!")
+    await _proceed_after_customer_update(message, state, result)
+
+
+@dp.message(OnboardingFSM.entering_pinfl)
+async def receive_pinfl(message: Message, state: FSMContext):
+    pinfl = "".join(ch for ch in (message.text or "") if ch.isdigit())
+    if len(pinfl) != 14:
+        await message.answer("PINFL 14 ta raqamdan iborat bo'lishi kerak. Qayta kiriting:")
+        return
+
+    status, result = await api_client.verify_pinfl(str(message.from_user.id), pinfl)
+    if status != 200:
+        await message.answer(
+            "Tekshirishda xatolik yuz berdi. Iltimos, birozdan so'ng qayta urinib ko'ring."
+        )
+        return
+
+    await state.clear()
+    if result.get("is_blocked"):
+        await message.answer(BLOCKED_MESSAGE, reply_markup=ReplyKeyboardRemove())
+        return
+
+    await message.answer(
+        "Rahmat! Siz tashkilot xodimi sifatida tasdiqlandingiz. Endi murojaat qoldirishingiz mumkin.",
+        reply_markup=MAIN_MENU,
+    )
 
 
 async def _prompt_category(message: Message, state: FSMContext):
@@ -185,6 +233,26 @@ async def _prompt_category(message: Message, state: FSMContext):
 
 @dp.message(F.text == "🆕 Yangi murojaat")
 async def new_request_start(message: Message, state: FSMContext):
+    # Himoya: bot qayta ishga tushgan bo'lsa xotiradagi FSM holati yo'qoladi,
+    # lekin asosiy menyu tugmasi hali ko'rinishda qolishi mumkin - shuning uchun
+    # bloklangan/PINFL tasdiqlanmagan mijoz bevosita shu yerga kirib qolmasligi
+    # uchun serverdan qayta tekshiramiz (yaratish backend tomonida ham himoyalangan).
+    status, cust = await api_client.get_customer_status(str(message.from_user.id))
+    if status != 200 or not cust:
+        await message.answer("Iltimos, avval /start buyrug'ini yuboring.")
+        return
+    if cust.get("is_blocked"):
+        await message.answer(BLOCKED_MESSAGE, reply_markup=ReplyKeyboardRemove())
+        return
+    if not cust.get("pinfl_verified"):
+        await state.set_state(OnboardingFSM.entering_pinfl)
+        await message.answer(
+            "Xizmatdan foydalanishdan oldin PINFL raqamingizni tasdiqlashingiz kerak. "
+            "Iltimos, PINFL (JSHSHIR, 14 ta raqam) raqamingizni yuboring:",
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        return
+
     status, buildings = await api_client.list_buildings()
     if status != 200:
         await message.answer("Binolar ro'yxatini yuklashda xatolik yuz berdi. Birozdan so'ng qayta urinib ko'ring.")

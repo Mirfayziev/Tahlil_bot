@@ -148,7 +148,31 @@ class Customer(db.Model):
     language = db.Column(db.String(5), default="uz")  # uz / ru / en
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    # Tashkilot xodimi ekanligini tekshirish (PINFL/JSHSHIR orqali) — murojaat
+    # bot'i orqali xizmatdan faqat tasdiqlangan xodimlar foydalana oladi.
+    pinfl = db.Column(db.String(14), nullable=True, index=True)
+    pinfl_verified = db.Column(db.Boolean, default=False, nullable=False)
+    is_blocked = db.Column(db.Boolean, default=False, nullable=False)
+    blocked_reason = db.Column(db.Text, nullable=True)
+
     requests = db.relationship("ServiceRequest", back_populates="customer")
+
+
+# ---------------------------------------------------------------------------
+# Tashkilot xodimlari ro'yxati (PINFL/JSHSHIR bo'yicha) — murojaatchi bot orqali
+# xizmatdan foydalanishdan oldin shu ro'yxat bilan solishtiriladi. Bu Users
+# jadvalidan farqli — bu yerdagilar tizimga kirmaydi, faqat "biz korxonada
+# ishlaydi" ekanini tasdiqlash uchun ma'lumot manbai.
+# ---------------------------------------------------------------------------
+class Employee(db.Model):
+    __tablename__ = "employees"
+
+    id = db.Column(db.Integer, primary_key=True)
+    full_name = db.Column(db.String(150), nullable=False)
+    pinfl = db.Column(db.String(14), unique=True, nullable=False, index=True)
+    position = db.Column(db.String(120))
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 # ---------------------------------------------------------------------------

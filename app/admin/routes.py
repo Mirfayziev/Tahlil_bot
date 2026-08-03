@@ -8,7 +8,7 @@ from app.extensions import db
 from app.decorators import roles_required
 from app.security import validate_password_strength
 from app.models import (
-    ServiceCategory, User, Department, RoleEnum, AuditLog, Building
+    ServiceCategory, User, Department, RoleEnum, AuditLog, Building, Employee, Customer
 )
 
 admin_bp = Blueprint("admin", __name__)
@@ -196,6 +196,130 @@ def buildings():
 
     blds = Building.query.all()
     return render_template("admin/buildings.html", buildings=blds)
+
+
+def _normalize_pinfl(raw: str) -> str:
+    return "".join(ch for ch in (raw or "") if ch.isdigit())
+
+
+# ---------------------------------------------------------------------------
+# Tashkilot xodimlari (PINFL ro'yxati — murojaatchi bot orqali xizmatdan
+# foydalanish uchun tekshiriladigan ro'yxat, tizimga kiruvchi Users'dan farqli)
+# ---------------------------------------------------------------------------
+@admin_bp.route("/employees", methods=["GET", "POST"])
+@login_required
+@roles_required(RoleEnum.SUPER_ADMIN, RoleEnum.ADMINISTRATOR)
+def employees():
+    if request.method == "POST":
+        pinfl = _normalize_pinfl(request.form.get("pinfl"))
+        if len(pinfl) != 14:
+            flash("PINFL 14 ta raqamdan iborat bo'lishi kerak.", "danger")
+            return redirect(url_for("admin.employees"))
+        if Employee.query.filter_by(pinfl=pinfl).first():
+            flash("Bu PINFL bilan xodim allaqachon mavjud.", "danger")
+            return redirect(url_for("admin.employees"))
+
+        emp = Employee(full_name=request.form["full_name"], pinfl=pinfl,
+                        position=request.form.get("position"))
+        db.session.add(emp)
+        log_action("create", "Employee", details=emp.full_name)
+        db.session.commit()
+        flash(f"{emp.full_name} xodimlar ro'yxatiga qo'shildi.", "success")
+        return redirect(url_for("admin.employees"))
+
+    emps = Employee.query.order_by(Employee.full_name).all()
+    blocked_count = Customer.query.filter_by(is_blocked=True).count()
+    return render_template("admin/employees.html", employees=emps, blocked_count=blocked_count)
+
+
+@admin_bp.route("/employees/<int:emp_id>/toggle", methods=["POST"])
+@login_required
+@roles_required(RoleEnum.SUPER_ADMIN, RoleEnum.ADMINISTRATOR)
+def toggle_employee(emp_id):
+    emp = Employee.query.get_or_404(emp_id)
+    emp.is_active = not emp.is_active
+    db.session.commit()
+    return redirect(url_for("admin.employees"))
+
+
+@admin_bp.route("/employees/<int:emp_id>/delete", methods=["POST"])
+@login_required
+@roles_required(RoleEnum.SUPER_ADMIN, RoleEnum.ADMINISTRATOR)
+def delete_employee(emp_id):
+    emp = Employee.query.get_or_404(emp_id)
+    log_action("delete", "Employee", entity_id=emp.id, details=emp.full_name)
+    db.session.delete(emp)
+    db.session.commit()
+    flash("Xodim o'chirildi.", "success")
+    return redirect(url_for("admin.employees"))
+
+
+@admin_bp.route("/employees/import", methods=["POST"])
+@login_required
+@roles_required(RoleEnum.SUPER_ADMIN, RoleEnum.ADMINISTRATOR)
+def import_employees():
+    """Excel orqali ommaviy import. Ustunlar: F.I.Sh | PINFL | Lavozimi (ixtiyoriy)."""
+    file = request.files.get("file")
+    if not file or not file.filename:
+        flash("Fayl tanlanmadi.", "danger")
+        return redirect(url_for("admin.employees"))
+
+    from openpyxl import load_workbook
+    try:
+        wb = load_workbook(file, read_only=True, data_only=True)
+        sheet = wb.active
+    except Exception:
+        flash("Faylni o'qib bo'lmadi. Excel (.xlsx) fayl yuklang.", "danger")
+        return redirect(url_for("admin.employees"))
+
+    added, skipped = 0, 0
+    existing_pinfls = {e.pinfl for e in Employee.query.all()}
+    rows = sheet.iter_rows(min_row=2, values_only=True)
+    for row in rows:
+        if not row or not row[0]:
+            continue
+        full_name = str(row[0]).strip()
+        pinfl = _normalize_pinfl(str(row[1])) if len(row) > 1 and row[1] else ""
+        position = str(row[2]).strip() if len(row) > 2 and row[2] else None
+
+        if len(pinfl) != 14 or not full_name or pinfl in existing_pinfls:
+            skipped += 1
+            continue
+
+        db.session.add(Employee(full_name=full_name, pinfl=pinfl, position=position))
+        existing_pinfls.add(pinfl)
+        added += 1
+
+    log_action("import", "Employee", details=f"added={added}, skipped={skipped}")
+    db.session.commit()
+    flash(f"{added} ta xodim qo'shildi, {skipped} ta qator o'tkazib yuborildi "
+          f"(noto'g'ri PINFL yoki takroriy).", "success")
+    return redirect(url_for("admin.employees"))
+
+
+# ---------------------------------------------------------------------------
+# Bloklangan murojaatchilar (PINFL tashkilot xodimlari ro'yxatida topilmagan)
+# ---------------------------------------------------------------------------
+@admin_bp.route("/blocked-customers")
+@login_required
+@roles_required(RoleEnum.SUPER_ADMIN, RoleEnum.ADMINISTRATOR)
+def blocked_customers():
+    customers = Customer.query.filter_by(is_blocked=True).order_by(Customer.created_at.desc()).all()
+    return render_template("admin/blocked_customers.html", customers=customers)
+
+
+@admin_bp.route("/blocked-customers/<int:customer_id>/unblock", methods=["POST"])
+@login_required
+@roles_required(RoleEnum.SUPER_ADMIN, RoleEnum.ADMINISTRATOR)
+def unblock_customer(customer_id):
+    customer = Customer.query.get_or_404(customer_id)
+    customer.is_blocked = False
+    customer.blocked_reason = None
+    customer.pinfl_verified = True
+    log_action("update", "Customer", entity_id=customer.id, details="unblocked")
+    db.session.commit()
+    flash(f"{customer.full_name or customer.telegram_id} bloklanishi bekor qilindi.", "success")
+    return redirect(url_for("admin.blocked_customers"))
 
 
 @admin_bp.route("/audit-log")

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Bloklangan murojaatchilar{% endblock %}
+{% block content %}
+<h2>🚫 Bloklangan murojaatchilar</h2>
+<p style="color:var(--text-dim);">
+  PINFL <a href="{{ url_for('admin.employees') }}">tashkilot xodimlari ro'yxatida</a> topilmagani uchun
+  xizmatdan foydalana olmayotgan murojaatchilar. Xato bo'lsa, tekshirib blokdan chiqarishingiz mumkin.
+</p>
+
+<div class="card">
+  <table>
+    <thead><tr><th>F.I.Sh</th><th>Telegram ID</th><th>Telefon</th><th>Kiritilgan PINFL</th><th>Sabab</th><th></th></tr></thead>
+    <tbody>
+      {% for c in customers %}
+      <tr style="--i: {{ loop.index }}">
+        <td>{{ c.full_name or '-' }}</td>
+        <td>{{ c.telegram_id }}</td>
+        <td>{{ c.phone or '-' }}</td>
+        <td>{{ c.pinfl or '-' }}</td>
+        <td>{{ c.blocked_reason or '-' }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin.unblock_customer', customer_id=c.id) }}" onsubmit="return confirm('Blokdan chiqarishni tasdiqlaysizmi?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn" type="submit">Blokdan chiqarish</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6">Bloklangan murojaatchilar yo'q.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

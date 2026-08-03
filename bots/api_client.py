@@ -40,6 +40,12 @@ class ApiClient:
             "telegram_id": telegram_id, "full_name": full_name, "phone": phone, "language": language
         })
 
+    async def get_customer_status(self, telegram_id):
+        return await self._request("GET", f"/customers/{telegram_id}/status")
+
+    async def verify_pinfl(self, telegram_id, pinfl):
+        return await self._request("POST", f"/customers/{telegram_id}/verify-pinfl", json={"pinfl": pinfl})
+
     async def list_categories(self, lang="uz"):
         return await self._request("GET", f"/categories?lang={lang}")
 

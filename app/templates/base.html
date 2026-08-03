@@ -64,6 +64,7 @@
       <a href="{{ url_for('admin.staff') }}" class="{{ 'active' if request.endpoint=='admin.staff' }}"><span class="nav-icon">👥</span>Xodimlar</a>
       <a href="{{ url_for('admin.departments') }}" class="{{ 'active' if request.endpoint=='admin.departments' }}"><span class="nav-icon">🏢</span>Bo'limlar</a>
       <a href="{{ url_for('admin.buildings') }}" class="{{ 'active' if request.endpoint=='admin.buildings' }}"><span class="nav-icon">🏛️</span>Binolar</a>
+      <a href="{{ url_for('admin.employees') }}" class="{{ 'active' if request.endpoint in ['admin.employees','admin.blocked_customers'] }}"><span class="nav-icon">🪪</span>Tashkilot xodimlari</a>
       {% endif %}
       <a href="{{ url_for('reports.index') }}" class="{{ 'active' if 'reports' in request.endpoint }}"><span class="nav-icon">📈</span>Hisobotlar</a>
       {% if current_user.role.value == 'super_admin' %}

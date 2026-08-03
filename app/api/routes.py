@@ -8,7 +8,7 @@ from app.decorators import internal_api_required
 from app.models import (
     Customer, ServiceCategory, ServiceRequest, RequestStatus, Priority,
     RequestAttachment, RequestAssignment, RequestStatusLog, Rating,
-    User, RoleEnum, Department, Building
+    User, RoleEnum, Department, Building, Employee
 )
 from app.ai.service import analyze_request_text
 from app.notify import notify
@@ -22,6 +22,18 @@ def _gen_request_number():
         ServiceRequest.number.like(f"REQ-{year}-%")
     ).count() + 1
     return f"REQ-{year}-{count:06d}"
+
+
+def _normalize_pinfl(raw: str) -> str:
+    return "".join(ch for ch in (raw or "") if ch.isdigit())
+
+
+def _customer_status_payload(customer: Customer) -> dict:
+    return {
+        "id": customer.id, "telegram_id": customer.telegram_id,
+        "full_name": customer.full_name, "phone": customer.phone,
+        "pinfl_verified": customer.pinfl_verified, "is_blocked": customer.is_blocked,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -41,8 +53,51 @@ def upsert_customer():
     customer.phone = data.get("phone", customer.phone)
     customer.language = data.get("language", customer.language or "uz")
     db.session.commit()
-    return jsonify({"id": customer.id, "telegram_id": customer.telegram_id,
-                     "full_name": customer.full_name, "phone": customer.phone})
+    return jsonify(_customer_status_payload(customer))
+
+
+@api_bp.route("/customers/<telegram_id>/status", methods=["GET"])
+@internal_api_required
+def customer_status(telegram_id):
+    """Bot mijoz holatini (telefon/PINFL tasdiqlangan, bloklangan) tekshirishi uchun."""
+    customer = Customer.query.filter_by(telegram_id=str(telegram_id)).first()
+    if not customer:
+        return jsonify({"error": "customer not found"}), 404
+    return jsonify(_customer_status_payload(customer))
+
+
+@api_bp.route("/customers/<telegram_id>/verify-pinfl", methods=["POST"])
+@internal_api_required
+def verify_pinfl(telegram_id):
+    """
+    Murojaatchining PINFL (JSHSHIR) raqamini tashkilot xodimlari ro'yxati
+    (Employee) bilan solishtiradi. Mos kelsa — xizmatdan foydalanishga ruxsat
+    (pinfl_verified=True), aks holda mijoz bloklanadi (TZ talabi: tashkilot
+    xodimi bo'lmagan murojaatchi xizmatdan foydalana olmasligi kerak).
+    """
+    data = request.get_json(force=True)
+    customer = Customer.query.filter_by(telegram_id=str(telegram_id)).first()
+    if not customer:
+        return jsonify({"error": "customer not found"}), 404
+
+    pinfl = _normalize_pinfl(data.get("pinfl", ""))
+    if len(pinfl) != 14:
+        return jsonify({"error": "invalid pinfl format"}), 400
+
+    employee = Employee.query.filter_by(pinfl=pinfl, is_active=True).first()
+    customer.pinfl = pinfl
+
+    if employee:
+        customer.pinfl_verified = True
+        customer.is_blocked = False
+        customer.blocked_reason = None
+    else:
+        customer.pinfl_verified = False
+        customer.is_blocked = True
+        customer.blocked_reason = "PINFL tashkilot xodimlari ro'yxatida topilmadi"
+
+    db.session.commit()
+    return jsonify(_customer_status_payload(customer))
 
 
 @api_bp.route("/categories", methods=["GET"])
@@ -81,6 +136,10 @@ def create_request():
     customer = Customer.query.filter_by(telegram_id=str(data["telegram_id"])).first()
     if not customer:
         return jsonify({"error": "customer not found"}), 404
+    if customer.is_blocked:
+        return jsonify({"error": "customer blocked"}), 403
+    if not customer.pinfl_verified:
+        return jsonify({"error": "pinfl not verified"}), 403
 
     category = ServiceCategory.query.get(data["category_id"])
     if not category:

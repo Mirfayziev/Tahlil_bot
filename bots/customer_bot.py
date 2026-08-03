@@ -142,7 +142,7 @@ async def cmd_start(message: Message, state: FSMContext):
         return
 
     await message.answer(
-        "Assalomu alaykum! Xizmat ko'rsatish botiga xush kelibsiz.\n\n"
+        "Assalomu alaykum! Ishlar boshqarmasi xizmat ko'rsatish botiga xush kelibsiz.\n\n"
         "Bu yerda siz texnik va xo'jalik xizmatlari bo'yicha murojaat qoldirishingiz mumkin."
     )
     await _proceed_after_customer_update(message, state, result)

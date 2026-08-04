@@ -34,6 +34,30 @@ body {
 ::-webkit-scrollbar-thumb { background: var(--neon-cyan-dark); border-radius: 8px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--neon-cyan); }
 
+/* Forma elementlari — brauzer standart (oq) ko'rinishi o'rniga mavzuga mos qorong'i uslub */
+input[type="text"], input[type="password"], input[type="email"], input[type="number"],
+input[type="date"], input[type="datetime-local"], input[type="tel"], input[type="search"],
+input[type="file"], select, textarea {
+  background: var(--panel-bg-strong);
+  color: var(--text-main);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color-scheme: dark;
+}
+select[multiple] { padding: 4px; }
+select option {
+  background: var(--bg-void);
+  color: var(--text-main);
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.15);
+}
+
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }

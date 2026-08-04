@@ -254,11 +254,38 @@ def delete_employee(emp_id):
     return redirect(url_for("admin.employees"))
 
 
+_NAME_HEADER_ALIASES = ("f.i.sh", "fio", "ism familya", "ism", "full_name", "фио", "ф.и.о")
+_PINFL_HEADER_ALIASES = ("pinfl", "jshshir", "жшшир", "пинфл", "inn")
+_POSITION_HEADER_ALIASES = ("lavozim", "lavozimi", "position", "должность", "должность работника")
+
+
+def _detect_column(header_row, aliases, fallback_index):
+    """Sarlavha qatoridan mos ustunni topadi (nom bo'yicha); topilmasa,
+    eski qattiq tartib (0=ism, 1=PINFL, 2=lavozim) bilan orqaga qaytadi."""
+    for idx, cell in enumerate(header_row or []):
+        if cell and str(cell).strip().lower() in aliases:
+            return idx
+    return fallback_index
+
+
+def _coerce_pinfl(value) -> str:
+    """Excel katakchasi son (int/float) yoki matn bo'lishidan qat'iy nazar
+    PINFL'ni raqamlarga ajratib oladi (masalan floatning ".0" qo'shimchasi
+    kabi artefaktlarsiz)."""
+    if value is None:
+        return ""
+    if isinstance(value, float) and value.is_integer():
+        value = int(value)
+    return _normalize_pinfl(str(value))
+
+
 @admin_bp.route("/employees/import", methods=["POST"])
 @login_required
 @roles_required(RoleEnum.SUPER_ADMIN, RoleEnum.ADMINISTRATOR)
 def import_employees():
-    """Excel orqali ommaviy import. Ustunlar: F.I.Sh | PINFL | Lavozimi (ixtiyoriy)."""
+    """Excel orqali ommaviy import. Ustunlar: F.I.Sh | PINFL | Lavozimi (ixtiyoriy).
+    Ustun tartibi sarlavha nomi bo'yicha avtomatik aniqlanadi; topilmasa standart
+    tartib (1=F.I.Sh, 2=PINFL, 3=Lavozim) qo'llanadi."""
     file = request.files.get("file")
     if not file or not file.filename:
         flash("Fayl tanlanmadi.", "danger")
@@ -272,28 +299,57 @@ def import_employees():
         flash("Faylni o'qib bo'lmadi. Excel (.xlsx) fayl yuklang.", "danger")
         return redirect(url_for("admin.employees"))
 
-    added, skipped = 0, 0
-    existing_pinfls = {e.pinfl for e in Employee.query.all()}
-    rows = sheet.iter_rows(min_row=2, values_only=True)
-    for row in rows:
-        if not row or not row[0]:
-            continue
-        full_name = str(row[0]).strip()
-        pinfl = _normalize_pinfl(str(row[1])) if len(row) > 1 and row[1] else ""
-        position = str(row[2]).strip() if len(row) > 2 and row[2] else None
+    all_rows = sheet.iter_rows(min_row=1, values_only=True)
+    try:
+        header_row = next(all_rows)
+    except StopIteration:
+        flash("Fayl bo'sh.", "danger")
+        return redirect(url_for("admin.employees"))
 
-        if len(pinfl) != 14 or not full_name or pinfl in existing_pinfls:
-            skipped += 1
+    name_col = _detect_column(header_row, _NAME_HEADER_ALIASES, 0)
+    pinfl_col = _detect_column(header_row, _PINFL_HEADER_ALIASES, 1)
+    position_col = _detect_column(header_row, _POSITION_HEADER_ALIASES, 2)
+
+    added = 0
+    skip_invalid_pinfl = 0
+    skip_missing_name = 0
+    skip_duplicate = 0
+    existing_pinfls = {e.pinfl for e in Employee.query.all()}
+
+    for row in all_rows:
+        if not row or all(v is None for v in row):
+            continue
+
+        full_name = str(row[name_col]).strip() if name_col < len(row) and row[name_col] else ""
+        pinfl = _coerce_pinfl(row[pinfl_col]) if pinfl_col < len(row) else ""
+        position = (str(row[position_col]).strip()
+                    if position_col < len(row) and row[position_col] else None)
+
+        if not full_name:
+            skip_missing_name += 1
+            continue
+        if len(pinfl) != 14:
+            skip_invalid_pinfl += 1
+            continue
+        if pinfl in existing_pinfls:
+            skip_duplicate += 1
             continue
 
         db.session.add(Employee(full_name=full_name, pinfl=pinfl, position=position))
         existing_pinfls.add(pinfl)
         added += 1
 
-    log_action("import", "Employee", details=f"added={added}, skipped={skipped}")
+    total_skipped = skip_invalid_pinfl + skip_missing_name + skip_duplicate
+    log_action("import", "Employee",
+               details=f"added={added}, invalid_pinfl={skip_invalid_pinfl}, "
+                       f"missing_name={skip_missing_name}, duplicate={skip_duplicate}")
     db.session.commit()
-    flash(f"{added} ta xodim qo'shildi, {skipped} ta qator o'tkazib yuborildi "
-          f"(noto'g'ri PINFL yoki takroriy).", "success")
+    flash(
+        f"{added} ta xodim qo'shildi. Jami {total_skipped} ta qator o'tkazib yuborildi: "
+        f"{skip_invalid_pinfl} ta noto'g'ri/bo'sh PINFL, {skip_missing_name} ta F.I.Sh yo'q, "
+        f"{skip_duplicate} ta takroriy PINFL.",
+        "success" if added else "danger",
+    )
     return redirect(url_for("admin.employees"))
 
 

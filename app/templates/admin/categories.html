@@ -19,7 +19,7 @@
     <select name="department_id">
       <option value="">— Tegishli bo'lim (AI avtomatik yo'naltirish uchun) —</option>
       {% for d in departments %}
-      <option value="{{ d.id }}">{{ d.name }}</option>
+      <option value="{{ d.id }}">{{ d.name }} (#{{ d.id }})</option>
       {% endfor %}
     </select>
     <select name="default_priority">
@@ -48,7 +48,7 @@
             <select name="department_id" onchange="this.form.submit()" style="padding:6px 8px; border-radius:8px; border:1px solid var(--border);">
               <option value="">— bog'lanmagan —</option>
               {% for d in departments %}
-              <option value="{{ d.id }}" {{ 'selected' if c.department_id == d.id }}>{{ d.name }}</option>
+              <option value="{{ d.id }}" {{ 'selected' if c.department_id == d.id }}>{{ d.name }} (#{{ d.id }})</option>
               {% endfor %}
             </select>
           </form>

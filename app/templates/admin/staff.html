@@ -19,7 +19,7 @@
     <select name="department_id">
       <option value="">— Bo'lim —</option>
       {% for d in departments %}
-      <option value="{{ d.id }}">{{ d.name }}</option>
+      <option value="{{ d.id }}">{{ d.name }} (#{{ d.id }})</option>
       {% endfor %}
     </select>
     <input type="text" name="phone" placeholder="Telefon">
@@ -43,7 +43,7 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <select name="department_ids" multiple size="3" style="padding:6px 8px; border-radius:8px; border:1px solid var(--border); min-width:170px;">
               {% for d in departments %}
-              <option value="{{ d.id }}" {{ 'selected' if d in u.departments }}>{{ d.name }}</option>
+              <option value="{{ d.id }}" {{ 'selected' if d in u.departments }}>{{ d.name }} (#{{ d.id }})</option>
               {% endfor %}
             </select>
             <button class="btn btn-outline" type="submit" style="padding:6px 10px; font-size:11px;">Saqlash</button>
@@ -57,7 +57,7 @@
             <select name="department_id" onchange="this.form.submit()" style="padding:6px 8px; border-radius:8px; border:1px solid var(--border);">
               <option value="">— bog'lanmagan —</option>
               {% for d in departments %}
-              <option value="{{ d.id }}" {{ 'selected' if u.department_id == d.id }}>{{ d.name }}</option>
+              <option value="{{ d.id }}" {{ 'selected' if u.department_id == d.id }}>{{ d.name }} (#{{ d.id }})</option>
               {% endfor %}
             </select>
           </form>
@@ -69,7 +69,7 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <select name="building_ids" multiple size="2" style="padding:6px 8px; border-radius:8px; border:1px solid var(--border); min-width:150px;">
               {% for b in buildings %}
-              <option value="{{ b.id }}" {{ 'selected' if b in u.buildings }}>{{ b.name }}</option>
+              <option value="{{ b.id }}" {{ 'selected' if b in u.buildings }}>{{ b.name }} (#{{ b.id }})</option>
               {% endfor %}
             </select>
             <button class="btn btn-outline" type="submit" style="padding:6px 10px; font-size:11px;">Saqlash</button>

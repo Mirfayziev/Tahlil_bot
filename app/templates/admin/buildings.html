@@ -12,10 +12,21 @@
 </div>
 <div class="card">
   <table>
-    <thead><tr><th>Nomi</th><th>Tavsif</th><th>Ijrochilar soni</th></tr></thead>
+    <thead><tr><th>ID</th><th>Nomi</th><th>Tavsif</th><th>Ijrochilar soni</th><th></th></tr></thead>
     <tbody>
       {% for b in buildings %}
-      <tr style="--i: {{ loop.index }}"><td>{{ b.name }}</td><td>{{ b.description or '-' }}</td><td>{{ b.executors|length }}</td></tr>
+      <tr style="--i: {{ loop.index }}">
+        <td>{{ b.id }}</td>
+        <td>{{ b.name }}</td>
+        <td>{{ b.description or '-' }}</td>
+        <td>{{ b.executors|length }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin.delete_building', building_id=b.id) }}" onsubmit="return confirm('\'' + '{{ b.name }}' + '\' binosini o\'chirishni tasdiqlaysizmi?');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-outline" type="submit">O'chirish</button>
+          </form>
+        </td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>

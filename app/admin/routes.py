@@ -8,7 +8,8 @@ from app.extensions import db
 from app.decorators import roles_required
 from app.security import validate_password_strength
 from app.models import (
-    ServiceCategory, User, Department, RoleEnum, AuditLog, Building, Employee, Customer
+    ServiceCategory, User, Department, RoleEnum, AuditLog, Building, Employee, Customer,
+    ServiceRequest
 )
 
 admin_bp = Blueprint("admin", __name__)
@@ -173,7 +174,18 @@ def set_staff_buildings(user_id):
 @roles_required(RoleEnum.SUPER_ADMIN, RoleEnum.ADMINISTRATOR)
 def departments():
     if request.method == "POST":
-        dep = Department(name=request.form["name"], description=request.form.get("description"))
+        name = request.form["name"].strip()
+        existing = Department.query.filter(db.func.lower(Department.name) == name.lower()).first()
+        if existing:
+            flash(
+                f"\"{existing.name}\" nomli bo'lim allaqachon mavjud (ID: {existing.id}). "
+                f"Bir xil nomli ikkita bo'lim yaratish kategoriya/ijrochi biriktirishda "
+                f"chalkashlikka olib keladi — kerak bo'lsa mavjudini tahrirlang.",
+                "danger",
+            )
+            return redirect(url_for("admin.departments"))
+
+        dep = Department(name=name, description=request.form.get("description"))
         db.session.add(dep)
         db.session.commit()
         flash("Bo'lim qo'shildi.", "success")
@@ -183,12 +195,39 @@ def departments():
     return render_template("admin/departments.html", departments=deps)
 
 
+@admin_bp.route("/departments/<int:dep_id>/delete", methods=["POST"])
+@login_required
+@roles_required(RoleEnum.SUPER_ADMIN, RoleEnum.ADMINISTRATOR)
+def delete_department(dep_id):
+    dep = Department.query.get_or_404(dep_id)
+    # Bog'liq kategoriya/xodimlarni "bog'lanmagan" holatga o'tkazamiz (o'chirish
+    # ularni buzmaydi) - aks holda ma'lumotlar bazasi cheklovi buzilar edi.
+    ServiceCategory.query.filter_by(department_id=dep.id).update({"department_id": None})
+    User.query.filter_by(department_id=dep.id).update({"department_id": None})
+    dep.executors = []
+    log_action("delete", "Department", entity_id=dep.id, details=dep.name)
+    db.session.delete(dep)
+    db.session.commit()
+    flash(f"\"{dep.name}\" bo'limi o'chirildi.", "success")
+    return redirect(url_for("admin.departments"))
+
+
 @admin_bp.route("/buildings", methods=["GET", "POST"])
 @login_required
 @roles_required(RoleEnum.SUPER_ADMIN, RoleEnum.ADMINISTRATOR)
 def buildings():
     if request.method == "POST":
-        b = Building(name=request.form["name"], description=request.form.get("description"))
+        name = request.form["name"].strip()
+        existing = Building.query.filter(db.func.lower(Building.name) == name.lower()).first()
+        if existing:
+            flash(
+                f"\"{existing.name}\" nomli bino allaqachon mavjud (ID: {existing.id}). "
+                f"Bir xil nomli ikkita bino ijrochi biriktirishda chalkashlikka olib keladi.",
+                "danger",
+            )
+            return redirect(url_for("admin.buildings"))
+
+        b = Building(name=name, description=request.form.get("description"))
         db.session.add(b)
         db.session.commit()
         flash("Bino qo'shildi.", "success")
@@ -196,6 +235,20 @@ def buildings():
 
     blds = Building.query.all()
     return render_template("admin/buildings.html", buildings=blds)
+
+
+@admin_bp.route("/buildings/<int:building_id>/delete", methods=["POST"])
+@login_required
+@roles_required(RoleEnum.SUPER_ADMIN, RoleEnum.ADMINISTRATOR)
+def delete_building(building_id):
+    b = Building.query.get_or_404(building_id)
+    ServiceRequest.query.filter_by(building_id=b.id).update({"building_id": None})
+    b.executors = []
+    log_action("delete", "Building", entity_id=b.id, details=b.name)
+    db.session.delete(b)
+    db.session.commit()
+    flash(f"\"{b.name}\" binosi o'chirildi.", "success")
+    return redirect(url_for("admin.buildings"))
 
 
 def _normalize_pinfl(raw: str) -> str:

@@ -12,10 +12,21 @@
 </div>
 <div class="card">
   <table>
-    <thead><tr><th>Nomi</th><th>Tavsif</th><th>Xodimlar soni</th></tr></thead>
+    <thead><tr><th>ID</th><th>Nomi</th><th>Tavsif</th><th>Xodimlar soni</th><th></th></tr></thead>
     <tbody>
       {% for d in departments %}
-      <tr style="--i: {{ loop.index }}"><td>{{ d.name }}</td><td>{{ d.description or '-' }}</td><td>{{ d.users|length }}</td></tr>
+      <tr style="--i: {{ loop.index }}">
+        <td>{{ d.id }}</td>
+        <td>{{ d.name }}</td>
+        <td>{{ d.description or '-' }}</td>
+        <td>{{ d.users|length }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin.delete_department', dep_id=d.id) }}" onsubmit="return confirm('\'' + '{{ d.name }}' + '\' bo\'limini o\'chirishni tasdiqlaysizmi? Bog\'liq kategoriya/xodimlar \"bog\'lanmagan\" holatga o\'tadi.');">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-outline" type="submit">O'chirish</button>
+          </form>
+        </td>
+      </tr>
       {% endfor %}
     </tbody>
   </table>

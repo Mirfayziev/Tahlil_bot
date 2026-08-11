@@ -70,27 +70,8 @@ python bots/notifier.py
 > **Muhim:** birinchi kirishdan so'ng super admin parolini albatta o'zgartiring
 > (Xodimlar bo'limi orqali yangi parol bilan yangi super admin yarating yoki DB orqali yangilang).
 
-## 4. Render.com'ga joylashtirish
 
-Loyiha `Procfile` bilan birga keladi — Render'da 4 ta process turi:
-
-| Process       | Buyruq                                              |
-|---------------|------------------------------------------------------|
-| `web`         | `gunicorn run:app --bind 0.0.0.0:$PORT`              |
-| `customer_bot`| `python bots/customer_bot.py`                        |
-| `executor_bot`| `python bots/executor_bot.py`                        |
-| `notifier`    | `python bots/notifier.py`                            |
-
-Qadamlar:
-1. Render'da yangi **PostgreSQL** database yarating, `DATABASE_URL` ni oling.
-2. Yangi **Web Service** yarating, ushbu repo'ni ulang, `requirements.txt` avtomatik aniqlanadi.
-3. Environment Variables bo'limida `.env.example` dagi barcha o'zgaruvchilarni kiriting.
-4. `web` uchun start command: `gunicorn run:app --bind 0.0.0.0:$PORT`
-5. Har bir bot uchun alohida **Background Worker** yarating (Render'da "Background Worker" turi),
-   mos buyruqlarni bering (`python bots/customer_bot.py` va h.k.).
-6. Deploy tugagach, bir martalik Shell orqali: `python scripts/seed.py`
-
-## 5. TZ bandlari va tizimdagi joylashuvi
+## 4. TZ bandlari va tizimdagi joylashuvi
 
 | TZ bandi | Amalga oshirilishi |
 |---|---|
@@ -111,7 +92,7 @@ Qadamlar:
 | 16. Qo'shimcha | Audit log (`AuditLog`), Excel/PDF eksport, RBAC (`roles_required`), ko'p tillilik kategoriya darajasida |
 | 17. Texnologiyalar | Flask (backend), PostgreSQL (SQLAlchemy), Redis (config tayyor), JWT o'rniga sessiya-asosli auth + ichki API token |
 
-## 6. Kengaytirish bo'yicha tavsiyalar
+## 5. Kengaytirish bo'yicha tavsiyalar
 
 - **OneID/LDAP integratsiyasi** — `app/auth/routes.py` ichida qo'shimcha auth provayder qo'shish mumkin.
 - **GraphQL** — hozirgi REST API tuzilmasi ustiga Ariadne/Graphene bilan qo'shish mumkin.
@@ -122,13 +103,7 @@ Qadamlar:
 - **OpenAI/Azure OpenAI** — `config.AI_PROVIDER` va `app/ai/service.py` orqali provayderni almashtirish
   uchun tayyor joy qoldirilgan (hozircha Anthropic Claude ishlatilgan).
 
-## 7. Xavfsizlik eslatmalari
-
-- Production'da `FLASK_SECRET_KEY` va `INTERNAL_API_TOKEN` ni albatta uzun, tasodifiy qiymatlarga almashtiring.
-- `.env` faylini hech qachon repo'ga qo'shmang (`.gitignore` da allaqachon istisno qilingan).
-- HTTPS orqali ishlating (Render avtomatik SSL beradi).
-
-## 8. Yangi qo'shilgan funksiyalar (2-versiya)
+## 6. Yangi qo'shilgan funksiyalar (2-versiya)
 
 1. **Zudlik bilan Telegram bildirishnoma** — `app/notify.py` orqali har bir hodisada
    (yangi murojaat, tayinlash, holat o'zgarishi, muddat) tegishli odamga **darhol** xabar boradi,

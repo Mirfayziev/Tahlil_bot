@@ -514,7 +514,7 @@ async def help_handler(message: Message):
         "• Texnik/xo'jalik xizmatlari bo'yicha murojaat qoldirishingiz\n"
         "• Murojaat holatini (Jarayonda, Bajarildi, Rad etildi va h.k.) kuzatishingiz\n"
         "• Bajarilgan xizmatni 5 yulduzgacha baholashingiz mumkin.\n\n"
-        "Savollar bo'yicha: +998 99 978 87 80"
+        "Savollar bo'yicha: +998 99 978 87 80 yoki https://t.me/Aziz_Fayz1ev (Aziz Fayziev)"
     )
 
 

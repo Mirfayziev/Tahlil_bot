@@ -123,7 +123,7 @@ def list_departments():
 @internal_api_required
 def list_buildings():
     """Bot №1 orqali murojatchi tanlashi uchun Binolar ro'yxati."""
-    buildings = Building.query.order_by(Building.name).all()
+    buildings = Building.query.order_by(Building.sort_order, Building.name).all()
     return jsonify([{"id": b.id, "name": b.name} for b in buildings])
 
 

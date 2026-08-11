@@ -89,8 +89,10 @@ def _auto_assign_one(req, db, RequestAssignment, RequestStatusLog, User, RoleEnu
                 f"(kategoriya: {target_category.name_uz if target_category else '-'})."
     ))
 
+    photo_att = next((a for a in req.attachments if a.stage == "murojaat" and a.file_type == "photo"), None)
     notify("executor", executor.id,
-           f"🤖 AI orqali avtomatik topshiriq: {req.number} — {target_category.name_uz if target_category else req.category.name_uz}")
+           f"🤖 AI orqali avtomatik topshiriq: {req.number} — {target_category.name_uz if target_category else req.category.name_uz}",
+           photo_file_id=photo_att.file_ref if photo_att else None)
     notify("customer", req.customer_id,
            f"📤 Murojaatingiz ({req.number}) mutaxassisga yo'naltirildi:\n"
            f"{executor.full_name} ({executor.phone or 'tel. ko\u2018rsatilmagan'})")

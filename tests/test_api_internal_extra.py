@@ -126,3 +126,15 @@ def test_list_buildings(client, app, building):
     resp = client.get("/api/buildings", headers=_headers(app))
     assert resp.status_code == 200
     assert any(b["name"] == building.name for b in resp.get_json())
+
+
+def test_list_buildings_ordered_by_sort_order(client, app, db):
+    from app.models import Building
+    b_second = Building(name="B Bino", sort_order=2)
+    b_first = Building(name="A Bino", sort_order=1)
+    db.session.add_all([b_second, b_first])
+    db.session.commit()
+
+    resp = client.get("/api/buildings", headers=_headers(app))
+    names = [b["name"] for b in resp.get_json()]
+    assert names.index("A Bino") < names.index("B Bino")

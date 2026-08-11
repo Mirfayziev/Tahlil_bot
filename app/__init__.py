@@ -38,6 +38,7 @@ def create_app(config_class=Config):
     from app.dashboard.routes import dashboard_bp
     from app.api.routes import api_bp
     from app.reports.routes import reports_bp
+    from app.media import media_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp, url_prefix="/admin")
@@ -45,6 +46,7 @@ def create_app(config_class=Config):
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(api_bp, url_prefix="/api")
     app.register_blueprint(reports_bp, url_prefix="/reports")
+    app.register_blueprint(media_bp, url_prefix="/media")
 
     # Botlar X-Internal-Token orqali (sessiya/cookie'siz) autentifikatsiya qiladi,
     # shuning uchun brauzer-sessiyasiga mo'ljallangan CSRF tekshiruvi ularga tegishli emas.

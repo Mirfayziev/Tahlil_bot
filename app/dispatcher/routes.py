@@ -183,11 +183,13 @@ def assign_request(req_id):
             )
             return redirect(url_for("dispatcher.request_detail", req_id=req.id))
 
+    photo_att = next((a for a in req.attachments if a.stage == "murojaat" and a.file_type == "photo"), None)
     for eid in executor_ids:
         executor = eligible_by_id[int(eid)]
         db.session.add(RequestAssignment(request_id=req.id, executor_id=executor.id))
         executor.workload = (executor.workload or 0) + 1
-        _notify("executor", executor.id, f"Sizga yangi topshiriq keldi: {req.number} — {req.category.name_uz}")
+        _notify("executor", executor.id, f"Sizga yangi topshiriq keldi: {req.number} — {req.category.name_uz}",
+                photo_file_id=photo_att.file_ref if photo_att else None)
 
     if deadline_str:
         req.deadline_at = datetime.strptime(deadline_str, "%Y-%m-%dT%H:%M")

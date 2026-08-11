@@ -22,8 +22,30 @@
     {% if req.is_overdue %}<span class="badge badge-rad_etildi">MUDDAT O'TDI</span>{% endif %}</p>
 
   {% if req.attachments %}
-  <p><b>Fayllar:</b></p>
-  <ul>{% for a in req.attachments %}<li>{{ a.file_type }} ({{ a.stage }}) — {{ a.file_ref }}</li>{% endfor %}</ul>
+  {% macro attachment_thumb(a) -%}
+    {% if a.file_type == 'photo' %}
+    <a href="{{ url_for('media.telegram_file', attachment_id=a.id) }}" target="_blank">
+      <img src="{{ url_for('media.telegram_file', attachment_id=a.id) }}" alt="rasm"
+           style="width:110px; height:110px; object-fit:cover; border-radius:8px; border:1px solid var(--border);">
+    </a>
+    {% else %}
+    <a class="btn btn-outline" href="{{ url_for('media.telegram_file', attachment_id=a.id) }}" target="_blank">{{ a.file_type }}</a>
+    {% endif %}
+  {%- endmacro %}
+  {% set request_photos = req.attachments|selectattr('stage', 'equalto', 'murojaat')|list %}
+  {% set done_photos = req.attachments|selectattr('stage', 'equalto', 'bajarilgan_ish')|list %}
+  {% if request_photos %}
+  <p><b>Murojaat fayllari:</b></p>
+  <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
+    {% for a in request_photos %}{{ attachment_thumb(a) }}{% endfor %}
+  </div>
+  {% endif %}
+  {% if done_photos %}
+  <p><b>Bajarilgan ish (yakuniy xulosa) fayllari:</b></p>
+  <div style="display:flex; flex-wrap:wrap; gap:10px;">
+    {% for a in done_photos %}{{ attachment_thumb(a) }}{% endfor %}
+  </div>
+  {% endif %}
   {% endif %}
 </div>
 

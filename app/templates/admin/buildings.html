@@ -12,11 +12,18 @@
 </div>
 <div class="card">
   <table>
-    <thead><tr><th>ID</th><th>Nomi</th><th>Tavsif</th><th>Ijrochilar soni</th><th></th></tr></thead>
+    <thead><tr><th>ID</th><th>Tartib</th><th>Nomi</th><th>Tavsif</th><th>Ijrochilar soni</th><th></th></tr></thead>
     <tbody>
       {% for b in buildings %}
       <tr style="--i: {{ loop.index }}">
         <td>{{ b.id }}</td>
+        <td>
+          <form method="POST" action="{{ url_for('admin.reorder_building', building_id=b.id) }}" style="display:flex; gap:4px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="number" name="sort_order" value="{{ b.sort_order }}" style="width:60px;">
+            <button class="btn btn-outline" type="submit" title="Tartibni saqlash">💾</button>
+          </form>
+        </td>
         <td>{{ b.name }}</td>
         <td>{{ b.description or '-' }}</td>
         <td>{{ b.executors|length }}</td>

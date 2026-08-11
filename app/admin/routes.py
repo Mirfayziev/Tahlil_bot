@@ -227,14 +227,30 @@ def buildings():
             )
             return redirect(url_for("admin.buildings"))
 
-        b = Building(name=name, description=request.form.get("description"))
+        max_order = db.session.query(db.func.max(Building.sort_order)).scalar() or 0
+        b = Building(name=name, description=request.form.get("description"), sort_order=max_order + 1)
         db.session.add(b)
         db.session.commit()
         flash("Bino qo'shildi.", "success")
         return redirect(url_for("admin.buildings"))
 
-    blds = Building.query.all()
+    blds = Building.query.order_by(Building.sort_order, Building.name).all()
     return render_template("admin/buildings.html", buildings=blds)
+
+
+@admin_bp.route("/buildings/<int:building_id>/reorder", methods=["POST"])
+@login_required
+@roles_required(RoleEnum.SUPER_ADMIN, RoleEnum.ADMINISTRATOR)
+def reorder_building(building_id):
+    b = Building.query.get_or_404(building_id)
+    try:
+        b.sort_order = int(request.form.get("sort_order", 0))
+    except ValueError:
+        flash("Tartib raqami butun son bo'lishi kerak.", "danger")
+        return redirect(url_for("admin.buildings"))
+    db.session.commit()
+    flash(f"\"{b.name}\" tartibi yangilandi.", "success")
+    return redirect(url_for("admin.buildings"))
 
 
 @admin_bp.route("/buildings/<int:building_id>/delete", methods=["POST"])

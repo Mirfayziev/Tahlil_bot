@@ -128,6 +128,39 @@
   </form>
 </div>
 
+{% if req.assignments %}
+<div class="card">
+  <h3>Ijrochilar</h3>
+  <table>
+    <thead><tr><th>Ijrochi</th><th>Javob</th><th>Ish boshlangan</th><th>Yakunlangan</th><th>Qo'shimcha vaqt so'rovi</th></tr></thead>
+    <tbody>
+      {% for a in req.assignments %}
+      <tr style="--i: {{ loop.index }}">
+        <td>{{ a.executor.full_name }}</td>
+        <td>{{ a.response or 'kutilmoqda' }}</td>
+        <td>{{ a.started_at.strftime('%d.%m %H:%M') if a.started_at else '-' }}</td>
+        <td>{{ a.finished_at.strftime('%d.%m %H:%M') if a.finished_at else '-' }}</td>
+        <td>
+          {% if a.extra_time_requested %}
+          <div class="flash flash-warning" style="margin:0;">
+            <b>{{ a.new_deadline.strftime('%d.%m.%Y %H:%M') if a.new_deadline else '-' }}</b> gacha
+            — sabab: {{ a.extra_time_reason or '-' }}
+            <form method="POST" action="{{ url_for('dispatcher.approve_extension', assignment_id=a.id) }}" style="margin-top:6px;">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-green" type="submit">Tasdiqlash</button>
+            </form>
+          </div>
+          {% else %}
+          -
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
 <div class="card">
   <h3>Holat tarixi</h3>
   <table>

@@ -2,6 +2,11 @@
 Telegram Bot №2 — Ijrochilar uchun (TZ p.15).
 Har bir ijrochi faqat o'ziga tegishli topshiriqlarni ko'radi (Maxfiylik, p.15).
 
+Muhim: har bir topshiriq o'ziga tegishli INLINE tugmalar bilan yuboriladi
+(reply-klaviatura EMAS) — shunda bir nechta topshiriq bir vaqtda ko'rsatilganda
+ularning tugmalari bir-birini bosib qolmaydi va ijrochi istalgan topshiriqni
+istalgan tartibda tanlab, boshqasiga xalaqit bermay bajarishi mumkin.
+
 Ishga tushirish:
     python bots/executor_bot.py
 """
@@ -21,7 +26,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import (
-    Message, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
+    Message, CallbackQuery, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove,
+    InlineKeyboardMarkup, InlineKeyboardButton,
 )
 
 from bots.api_client import api_client
@@ -102,6 +108,37 @@ def _format_task(t: dict) -> str:
     )
 
 
+def _task_keyboard(assignment_id: int, stage: str) -> InlineKeyboardMarkup:
+    """Topshiriqning joriy bosqichiga mos INLINE tugmalarni qaytaradi.
+    Har bir tugma xuddi shu topshiriq xabariga bog'langan bo'ladi - boshqa
+    topshiriqlarning tugmalariga hech qanday ta'sir qilmaydi."""
+    if stage == "pending":
+        rows = [
+            [InlineKeyboardButton(text="✅ Qabul qilish", callback_data=f"acc:{assignment_id}")],
+            [InlineKeyboardButton(text="❌ Rad etish", callback_data=f"rej:{assignment_id}")],
+        ]
+    elif stage == "accepted":
+        rows = [
+            [InlineKeyboardButton(text="▶️ Ish boshlash", callback_data=f"beg:{assignment_id}")],
+            [InlineKeyboardButton(text="❓ Qo'shimcha ma'lumot so'rash", callback_data=f"nfo:{assignment_id}")],
+        ]
+    else:  # in_progress
+        rows = [
+            [InlineKeyboardButton(text="✔️ Bajarildi deb belgilash", callback_data=f"cmp:{assignment_id}")],
+            [InlineKeyboardButton(text="⏱ Qo'shimcha vaqt so'rash", callback_data=f"ext:{assignment_id}")],
+            [InlineKeyboardButton(text="❓ Qo'shimcha ma'lumot so'rash", callback_data=f"nfo:{assignment_id}")],
+        ]
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def _task_stage(t: dict) -> str:
+    if t.get("response") is None:
+        return "pending"
+    if not t.get("started_at"):
+        return "accepted"
+    return "in_progress"
+
+
 @dp.message(F.text == "📥 Yangi topshiriqlar")
 async def new_tasks(message: Message):
     status, tasks = await api_client.executor_tasks(str(message.from_user.id))
@@ -116,34 +153,45 @@ async def new_tasks(message: Message):
         return
 
     for t in pending:
-        kb = ReplyKeyboardMarkup(
-            keyboard=[
-                [KeyboardButton(text=f"✅ Qabul qilish #{t['assignment_id']}")],
-                [KeyboardButton(text=f"❌ Rad etish #{t['assignment_id']}")],
-            ],
-            resize_keyboard=True,
-        )
-        await message.answer(_format_task(t), reply_markup=kb)
+        await message.answer(_format_task(t), reply_markup=_task_keyboard(t["assignment_id"], "pending"))
 
 
-@dp.message(F.text.startswith("✅ Qabul qilish"))
-async def accept_task(message: Message):
-    assignment_id = int(message.text.split("#")[-1])
+@dp.message(F.text == "🛠 Jarayondagi ishlarim")
+async def my_active_tasks(message: Message):
+    status, tasks = await api_client.executor_tasks(str(message.from_user.id))
+    if status != 200:
+        await message.answer("Xatolik: siz tizimda ijrochi sifatida ro'yxatdan o'tmagansiz. "
+                              "Administratorga murojaat qiling.")
+        return
+    active = [t for t in tasks if t.get("response") == "qabul_qilindi"]
+    if not active:
+        await message.answer("Faol topshiriqlar topilmadi.")
+        return
+    for t in active:
+        await message.answer(_format_task(t), reply_markup=_task_keyboard(t["assignment_id"], _task_stage(t)))
+
+
+@dp.callback_query(F.data.startswith("acc:"))
+async def cb_accept(callback: CallbackQuery, state: FSMContext):
+    assignment_id = int(callback.data.split(":")[1])
     status, _ = await api_client.respond_assignment(assignment_id, "qabul_qilindi")
-    if status == 200:
-        await message.answer("Topshiriq qabul qilindi. Ish boshlanganda «Ish boshlash» tugmasidan foydalaning.",
-                              reply_markup=MAIN_MENU)
-        await start_working_prompt(message, assignment_id)
-    else:
-        await message.answer("Xatolik yuz berdi.")
+    if status != 200:
+        await callback.answer("Xatolik yuz berdi.", show_alert=True)
+        return
+    await callback.answer("Qabul qilindi.")
+    await callback.message.edit_reply_markup(reply_markup=_task_keyboard(assignment_id, "accepted"))
 
 
-@dp.message(F.text.startswith("❌ Rad etish"))
-async def reject_task_start(message: Message, state: FSMContext):
-    assignment_id = int(message.text.split("#")[-1])
+@dp.callback_query(F.data.startswith("rej:"))
+async def cb_reject(callback: CallbackQuery, state: FSMContext):
+    assignment_id = int(callback.data.split(":")[1])
     await state.update_data(assignment_id=assignment_id)
     await state.set_state(RejectFSM.entering_reason)
-    await message.answer("Rad etish sababini yozing:", reply_markup=CANCEL_MENU)
+    await callback.answer()
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await callback.message.answer(
+        f"№{assignment_id} topshiriqni rad etish sababini yozing:", reply_markup=CANCEL_MENU
+    )
 
 
 @dp.message(RejectFSM.entering_reason)
@@ -157,42 +205,28 @@ async def reject_task_reason(message: Message, state: FSMContext):
         await message.answer("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.", reply_markup=MAIN_MENU)
 
 
-async def start_working_prompt(message: Message, assignment_id: int):
-    kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text=f"▶️ Ish boshlash #{assignment_id}")],
-            [KeyboardButton(text=f"❓ Qo'shimcha ma'lumot so'rash #{assignment_id}")],
-        ],
-        resize_keyboard=True,
-    )
-    await message.answer("Davom etish uchun tanlang:", reply_markup=kb)
-
-
-@dp.message(F.text.startswith("▶️ Ish boshlash"))
-async def begin_work(message: Message):
-    assignment_id = int(message.text.split("#")[-1])
+@dp.callback_query(F.data.startswith("beg:"))
+async def cb_begin(callback: CallbackQuery, state: FSMContext):
+    assignment_id = int(callback.data.split(":")[1])
     status, _ = await api_client.start_assignment(assignment_id)
     if status != 200:
-        await message.answer("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.")
+        await callback.answer("Xatolik yuz berdi.", show_alert=True)
         return
-    kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text=f"✔️ Bajarildi deb belgilash #{assignment_id}")],
-            [KeyboardButton(text=f"⏱ Qo'shimcha vaqt so'rash #{assignment_id}")],
-            [KeyboardButton(text=f"❓ Qo'shimcha ma'lumot so'rash #{assignment_id}")],
-        ],
-        resize_keyboard=True,
-    )
-    await message.answer("Ish boshlandi deb belgilandi. Muvaffaqiyatlar!", reply_markup=kb)
+    await callback.answer("Ish boshlandi!")
+    await callback.message.edit_reply_markup(reply_markup=_task_keyboard(assignment_id, "in_progress"))
 
 
-@dp.message(F.text.startswith("❓ Qo'shimcha ma'lumot so'rash"))
-async def request_info_start(message: Message, state: FSMContext):
-    assignment_id = int(message.text.split("#")[-1])
+@dp.callback_query(F.data.startswith("nfo:"))
+async def cb_request_info(callback: CallbackQuery, state: FSMContext):
+    assignment_id = int(callback.data.split(":")[1])
     await state.update_data(assignment_id=assignment_id)
     await state.set_state(InfoRequestFSM.entering_question)
-    await message.answer("Mijozdan qanday qo'shimcha ma'lumot kerakligini yozing:",
-                          reply_markup=CANCEL_MENU)
+    await callback.answer()
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await callback.message.answer(
+        f"№{assignment_id} bo'yicha mijozdan qanday qo'shimcha ma'lumot kerakligini yozing:",
+        reply_markup=CANCEL_MENU,
+    )
 
 
 @dp.message(InfoRequestFSM.entering_question)
@@ -206,13 +240,17 @@ async def request_info_send(message: Message, state: FSMContext):
         await message.answer("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.", reply_markup=MAIN_MENU)
 
 
-@dp.message(F.text.startswith("⏱ Qo'shimcha vaqt so'rash"))
-async def extend_start(message: Message, state: FSMContext):
-    assignment_id = int(message.text.split("#")[-1])
+@dp.callback_query(F.data.startswith("ext:"))
+async def cb_extend(callback: CallbackQuery, state: FSMContext):
+    assignment_id = int(callback.data.split(":")[1])
     await state.update_data(assignment_id=assignment_id)
     await state.set_state(ExtendFSM.entering_hours)
-    await message.answer("Necha soatga muddat uzaytirish kerak? (raqam kiriting)",
-                          reply_markup=CANCEL_MENU)
+    await callback.answer()
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await callback.message.answer(
+        f"№{assignment_id} uchun necha soatga muddat uzaytirish kerak? (raqam kiriting)",
+        reply_markup=CANCEL_MENU,
+    )
 
 
 @dp.message(ExtendFSM.entering_hours)
@@ -238,12 +276,17 @@ async def extend_reason(message: Message, state: FSMContext):
         await message.answer("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.", reply_markup=MAIN_MENU)
 
 
-@dp.message(F.text.startswith("✔️ Bajarildi deb belgilash"))
-async def complete_start(message: Message, state: FSMContext):
-    assignment_id = int(message.text.split("#")[-1])
+@dp.callback_query(F.data.startswith("cmp:"))
+async def cb_complete(callback: CallbackQuery, state: FSMContext):
+    assignment_id = int(callback.data.split(":")[1])
     await state.update_data(assignment_id=assignment_id, files=[])
     await state.set_state(ReportFSM.entering_report)
-    await message.answer("Bajarilgan ish haqida qisqacha hisobot yozing:", reply_markup=CANCEL_MENU)
+    await callback.answer()
+    await callback.message.edit_reply_markup(reply_markup=None)
+    await callback.message.answer(
+        f"№{assignment_id} bo'yicha bajarilgan ish haqida qisqacha hisobot yozing:",
+        reply_markup=CANCEL_MENU,
+    )
 
 
 @dp.message(ReportFSM.entering_report)
@@ -299,20 +342,6 @@ async def complete_finish(message: Message, state: FSMContext):
         await message.answer("Ajoyib! Topshiriq bajarildi deb belgilandi. Rahmat!", reply_markup=MAIN_MENU)
     else:
         await message.answer("Xatolik yuz berdi. Iltimos qayta urinib ko'ring.", reply_markup=MAIN_MENU)
-
-
-@dp.message(F.text == "🛠 Jarayondagi ishlarim")
-async def my_active_tasks(message: Message):
-    status, tasks = await api_client.executor_tasks(str(message.from_user.id))
-    if status != 200 or not tasks:
-        await message.answer("Sizda hozircha faol topshiriqlar yo'q.")
-        return
-    active = [t for t in tasks if t.get("response") == "qabul_qilindi"]
-    if not active:
-        await message.answer("Faol topshiriqlar topilmadi.")
-        return
-    for t in active:
-        await message.answer(_format_task(t))
 
 
 async def main():

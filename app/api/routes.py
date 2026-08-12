@@ -295,6 +295,7 @@ def executor_tasks(telegram_id):
             "priority": r.priority.value if r.priority else None,
             "deadline_at": r.deadline_at.isoformat() if r.deadline_at else None,
             "response": a.response, "status": r.status.value,
+            "started_at": a.started_at.isoformat() if a.started_at else None,
             "attachments": [{"type": att.file_type, "ref": att.file_ref} for att in r.attachments
                             if att.stage == "murojaat"],
         })

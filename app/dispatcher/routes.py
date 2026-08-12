@@ -272,3 +272,26 @@ def reanalyze_ai(req_id):
     else:
         flash("AI tahlili amalga oshmadi (API kaliti sozlanmagan bo'lishi mumkin).", "warning")
     return redirect(url_for("dispatcher.request_detail", req_id=req.id))
+
+
+@dispatcher_bp.route("/assignments/<int:assignment_id>/approve-extension", methods=["POST"])
+@login_required
+@roles_required(RoleEnum.SUPER_ADMIN, RoleEnum.ADMINISTRATOR, RoleEnum.DISPATCHER)
+def approve_extension(assignment_id):
+    """Ijrochi botdan yuborgan qo'shimcha vaqt so'rovini tasdiqlaydi (TZ p.15)."""
+    assignment = RequestAssignment.query.get_or_404(assignment_id)
+    req = assignment.request
+    if assignment.new_deadline:
+        old = req.status
+        req.deadline_at = assignment.new_deadline
+        assignment.extra_time_requested = False
+        _log_status(req, old, req.status,
+                    comment=f"Qo'shimcha vaqt tasdiqlandi: {assignment.new_deadline.strftime('%d.%m.%Y %H:%M')}")
+        _notify("executor", assignment.executor_id,
+                f"✅ {req.number} uchun qo'shimcha vaqt so'rovingiz tasdiqlandi. "
+                f"Yangi muddat: {assignment.new_deadline.strftime('%d.%m.%Y %H:%M')}")
+        db.session.commit()
+        flash(f"{req.number} — muddat uzaytirildi.", "success")
+    else:
+        flash("Bu ijrochida hali qo'shimcha vaqt so'rovi yo'q.", "warning")
+    return redirect(url_for("dispatcher.request_detail", req_id=req.id))

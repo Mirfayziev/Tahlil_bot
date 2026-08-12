@@ -20,7 +20,12 @@ class ApiClient:
     async def _request(self, method: str, path: str, **kwargs):
         url = f"{self.base_url}{path}"
         try:
-            timeout = aiohttp.ClientTimeout(total=10)
+            # 20s: ba'zi so'rovlar (masalan tayinlash/qabul qilish) ichida serverning
+            # o'zi Telegram'ga bildirishnoma yuborishga urinadi (bu yerda 10s gacha
+            # kutishi mumkin) - agar bot'ning timeout'i undan qisqa bo'lsa, server
+            # muvaffaqiyatli bajargan amal ham bot tomonida "xatolik" deb ko'rinib
+            # qolardi (chunki bot serverning javobini kutmay uzib qo'yar edi).
+            timeout = aiohttp.ClientTimeout(total=20)
             async with aiohttp.ClientSession(headers=HEADERS, timeout=timeout) as session:
                 async with session.request(method, url, **kwargs) as resp:
                     try:

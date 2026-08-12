@@ -92,3 +92,41 @@ def test_reject_request(client, super_admin, service_request, db):
     db.session.refresh(service_request)
     assert service_request.status == RequestStatus.REJECTED
     assert service_request.reject_reason == "Test sababi"
+
+
+def test_approve_extension_updates_deadline(client, super_admin, executor_user, service_request, db):
+    from datetime import datetime, timedelta
+
+    new_deadline = datetime.utcnow() + timedelta(hours=8)
+    assignment = RequestAssignment(
+        request_id=service_request.id, executor_id=executor_user.id,
+        extra_time_requested=True, extra_time_reason="Qo'shimcha jihoz kerak",
+        new_deadline=new_deadline,
+    )
+    db.session.add(assignment)
+    db.session.commit()
+
+    login(client, "test_admin", "AdminPass123")
+    resp = client.post(f"/dispatcher/assignments/{assignment.id}/approve-extension",
+                        follow_redirects=True)
+    assert resp.status_code == 200
+
+    db.session.refresh(assignment)
+    db.session.refresh(service_request)
+    assert assignment.extra_time_requested is False
+    assert service_request.deadline_at == new_deadline
+
+
+def test_approve_extension_without_pending_request_is_noop(client, super_admin, executor_user, service_request, db):
+    assignment = RequestAssignment(request_id=service_request.id, executor_id=executor_user.id)
+    db.session.add(assignment)
+    db.session.commit()
+    old_deadline = service_request.deadline_at
+
+    login(client, "test_admin", "AdminPass123")
+    resp = client.post(f"/dispatcher/assignments/{assignment.id}/approve-extension",
+                        follow_redirects=True)
+    assert resp.status_code == 200
+
+    db.session.refresh(service_request)
+    assert service_request.deadline_at == old_deadline

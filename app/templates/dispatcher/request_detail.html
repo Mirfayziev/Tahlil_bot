@@ -84,6 +84,13 @@
       <button class="btn btn-green" type="submit">Yopish</button>
     </form>
     {% endif %}
+    {% if req.status.value in ['bajarildi', 'yopildi'] %}
+    <form method="POST" action="{{ url_for('dispatcher.reopen_request', req_id=req.id) }}" style="display:flex; gap:6px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="text" name="reason" placeholder="Buyurtmachi e'tirozi sababi" required style="min-width:220px;">
+      <button class="btn btn-red" type="submit">Qayta jarayonga qaytarish</button>
+    </form>
+    {% endif %}
   </div>
 
   {% if req.status.value in ['qabul_qilindi', 'ijrochiga_yuborildi'] %}

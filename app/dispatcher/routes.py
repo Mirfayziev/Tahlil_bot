@@ -241,6 +241,47 @@ def close_request(req_id):
     return redirect(url_for("dispatcher.requests_list"))
 
 
+@dispatcher_bp.route("/requests/<int:req_id>/reopen", methods=["POST"])
+@login_required
+@roles_required(RoleEnum.SUPER_ADMIN, RoleEnum.ADMINISTRATOR, RoleEnum.DISPATCHER)
+def reopen_request(req_id):
+    """Buyurtmachi bajarilgan ishga e'tiroz bildirsa, dispetcher murojaatni
+    qayta jarayonga (ijrochiga) qaytaradi (TZ: sifat nazorati)."""
+    req = ServiceRequest.query.get_or_404(req_id)
+    reason = request.form.get("reason", "").strip()
+
+    if req.status not in (RequestStatus.DONE, RequestStatus.CLOSED):
+        flash("Faqat bajarilgan yoki yopilgan murojaatni qayta jarayonga qaytarish mumkin.", "danger")
+        return redirect(url_for("dispatcher.request_detail", req_id=req.id))
+    if not reason:
+        flash("Qayta jarayonga qaytarish sababini kiriting.", "danger")
+        return redirect(url_for("dispatcher.request_detail", req_id=req.id))
+
+    old = req.status
+    req.status = RequestStatus.IN_PROGRESS
+    req.completed_at = None
+    req.closed_at = None
+
+    executor = req.current_executor
+    if executor:
+        assignment = next(
+            (a for a in req.assignments if a.executor_id == executor.id and a.response != "rad_etildi"),
+            None,
+        )
+        if assignment:
+            assignment.finished_at = None
+        _notify("executor", executor.id,
+                f"⚠️ {req.number} buyurtmachi e'tirozi sababli qayta ko'rib chiqishga qaytarildi.\n"
+                f"Sabab: {reason}")
+
+    _log_status(req, old, req.status, comment=f"Qayta jarayonga qaytarildi (e'tiroz): {reason}")
+    _notify("customer", req.customer_id,
+            f"Murojaatingiz ({req.number}) qayta ko'rib chiqilmoqda. Tez orada bog'lanishadi.")
+    db.session.commit()
+    flash(f"{req.number} qayta jarayonga qaytarildi.", "success")
+    return redirect(url_for("dispatcher.request_detail", req_id=req.id))
+
+
 @dispatcher_bp.route("/requests/<int:req_id>/comment", methods=["POST"])
 @login_required
 @roles_required(RoleEnum.SUPER_ADMIN, RoleEnum.ADMINISTRATOR, RoleEnum.DISPATCHER)

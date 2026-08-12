@@ -130,3 +130,51 @@ def test_approve_extension_without_pending_request_is_noop(client, super_admin, 
 
     db.session.refresh(service_request)
     assert service_request.deadline_at == old_deadline
+
+
+def test_reopen_done_request_sends_back_to_in_progress(client, super_admin, executor_user, service_request, db):
+    from datetime import datetime
+
+    service_request.status = RequestStatus.DONE
+    service_request.completed_at = datetime.utcnow()
+    assignment = RequestAssignment(
+        request_id=service_request.id, executor_id=executor_user.id,
+        response="qabul_qilindi", started_at=datetime.utcnow(), finished_at=datetime.utcnow(),
+    )
+    db.session.add(assignment)
+    db.session.commit()
+
+    login(client, "test_admin", "AdminPass123")
+    resp = client.post(f"/dispatcher/requests/{service_request.id}/reopen",
+                        data={"reason": "Ish sifatsiz bajarilgan"}, follow_redirects=True)
+    assert resp.status_code == 200
+
+    db.session.refresh(service_request)
+    db.session.refresh(assignment)
+    assert service_request.status == RequestStatus.IN_PROGRESS
+    assert service_request.completed_at is None
+    assert assignment.finished_at is None
+
+
+def test_reopen_requires_reason(client, super_admin, service_request, db):
+    service_request.status = RequestStatus.DONE
+    db.session.commit()
+
+    login(client, "test_admin", "AdminPass123")
+    resp = client.post(f"/dispatcher/requests/{service_request.id}/reopen",
+                        data={"reason": ""}, follow_redirects=True)
+    assert resp.status_code == 200
+
+    db.session.refresh(service_request)
+    assert service_request.status == RequestStatus.DONE
+
+
+def test_reopen_rejected_from_non_done_status(client, super_admin, service_request, db):
+    # service_request default holati NEW - qayta jarayonga qaytarib bo'lmasligi kerak
+    login(client, "test_admin", "AdminPass123")
+    resp = client.post(f"/dispatcher/requests/{service_request.id}/reopen",
+                        data={"reason": "sabab"}, follow_redirects=True)
+    assert resp.status_code == 200
+
+    db.session.refresh(service_request)
+    assert service_request.status == RequestStatus.NEW

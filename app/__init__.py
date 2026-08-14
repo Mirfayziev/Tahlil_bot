@@ -99,8 +99,14 @@ def create_app(config_class=Config):
     def inject_globals():
         import random
         from datetime import datetime
+        from flask_login import current_user
         bg_scenes = ["cyber1.svg", "cyber2.svg", "cyber3.svg", "cyber4.svg", "cyber5.svg", "cyber6.svg", "cyber7.svg"]
-        return {"now": datetime.utcnow(), "bg_scene": random.choice(bg_scenes)}
+        blocked_customers_count = 0
+        if current_user.is_authenticated and current_user.role.value in ("super_admin", "administrator"):
+            from app.models import Customer
+            blocked_customers_count = Customer.query.filter_by(is_blocked=True).count()
+        return {"now": datetime.utcnow(), "bg_scene": random.choice(bg_scenes),
+                "blocked_customers_count": blocked_customers_count}
 
     from app.monitoring import init_monitoring
     init_monitoring(app)

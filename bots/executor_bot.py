@@ -139,6 +139,27 @@ def _task_stage(t: dict) -> str:
     return "in_progress"
 
 
+async def _guard_busy(callback: CallbackQuery, state: FSMContext) -> bool:
+    """Ijrochi bir nechta topshiriqni bir vaqtda ko'rishi mumkin, lekin matn
+    kiritish talab qiladigan jarayon (hisobot/sabab/savol) FAQAT bitta
+    bo'lishi mumkin - xotira bir foydalanuvchi uchun umumiy. Agar allaqachon
+    shunday jarayon boshlangan bo'lsa, yangisini boshlamasdan ogohlantiradi -
+    aks holda ikkinchi topshiriq uchun bosilgan tugma birinchisining
+    ma'lumotlarini ustidan yozib, hisobot noto'g'ri (yoki hech qanday)
+    topshiriqqa yozilmay qolishi mumkin edi."""
+    current = await state.get_state()
+    if current is not None:
+        data = await state.get_data()
+        busy_aid = data.get("assignment_id")
+        await callback.answer(
+            f"Iltimos, avval №{busy_aid} bo'yicha boshlagan amalni yakunlang "
+            f"yoki /bekor bilan bekor qiling, keyin bu tugmani bosing.",
+            show_alert=True,
+        )
+        return True
+    return False
+
+
 @dp.message(F.text == "📥 Yangi topshiriqlar")
 async def new_tasks(message: Message):
     status, tasks = await api_client.executor_tasks(str(message.from_user.id))
@@ -184,6 +205,8 @@ async def cb_accept(callback: CallbackQuery, state: FSMContext):
 
 @dp.callback_query(F.data.startswith("rej:"))
 async def cb_reject(callback: CallbackQuery, state: FSMContext):
+    if await _guard_busy(callback, state):
+        return
     assignment_id = int(callback.data.split(":")[1])
     await state.update_data(assignment_id=assignment_id)
     await state.set_state(RejectFSM.entering_reason)
@@ -218,6 +241,8 @@ async def cb_begin(callback: CallbackQuery, state: FSMContext):
 
 @dp.callback_query(F.data.startswith("nfo:"))
 async def cb_request_info(callback: CallbackQuery, state: FSMContext):
+    if await _guard_busy(callback, state):
+        return
     assignment_id = int(callback.data.split(":")[1])
     await state.update_data(assignment_id=assignment_id)
     await state.set_state(InfoRequestFSM.entering_question)
@@ -242,6 +267,8 @@ async def request_info_send(message: Message, state: FSMContext):
 
 @dp.callback_query(F.data.startswith("ext:"))
 async def cb_extend(callback: CallbackQuery, state: FSMContext):
+    if await _guard_busy(callback, state):
+        return
     assignment_id = int(callback.data.split(":")[1])
     await state.update_data(assignment_id=assignment_id)
     await state.set_state(ExtendFSM.entering_hours)
@@ -278,6 +305,8 @@ async def extend_reason(message: Message, state: FSMContext):
 
 @dp.callback_query(F.data.startswith("cmp:"))
 async def cb_complete(callback: CallbackQuery, state: FSMContext):
+    if await _guard_busy(callback, state):
+        return
     assignment_id = int(callback.data.split(":")[1])
     await state.update_data(assignment_id=assignment_id, files=[])
     await state.set_state(ReportFSM.entering_report)

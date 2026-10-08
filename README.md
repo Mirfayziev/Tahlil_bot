@@ -1,3 +1,48 @@
+# Service Request Management Platform
+
+**Web platform + two Telegram bots + Claude AI** for handling citizen/employee service requests end to end — built for a government organization in Uzbekistan from its technical specification.
+
+![Python](https://img.shields.io/badge/Python-3.12-blue) ![Flask](https://img.shields.io/badge/Flask-3.0-black) ![aiogram](https://img.shields.io/badge/aiogram-3.x-2CA5E0) ![tests](https://img.shields.io/badge/tests-134-brightgreen)
+
+## How it works
+
+```
+Customer ──► Telegram Bot #1 ──► Web platform (Flask) ──► AI module (Claude)
+                                      │  categorises, prioritises, drafts reply
+                                      ▼
+                    Dispatcher assigns ──► Telegram Bot #2 ──► Executor
+                                      │
+                         notifier.py ─┴─► deadline / SLA alerts via Telegram
+```
+
+## Features
+
+- **Two bots** — customers submit and track requests and rate the service; executors see only their own tasks, report progress and close them.
+- **AI triage (Claude)** — auto category and priority, summary, draft reply, delay-risk estimate, management digest.
+- **Dispatcher panel** — filters, search, assignment, comments, full status lifecycle (new → … → closed/rejected).
+- **6 roles with RBAC** — super admin, administrator, dispatcher, department head, executor, observer; audit log.
+- **SLA & alerts** — deadlines per category, overdue detection, Telegram reminders before and after deadline.
+- **Analytics** — KPI cards and Chart.js dashboards (trend, top categories, SLA, departments); Excel/PDF export.
+- **Production setup** — internal REST API secured with service token, Celery + Redis, Docker/docker-compose, Gunicorn, Prometheus metrics, rate limiting, Swagger docs, Railway config.
+
+## Stack
+
+Flask 3 · SQLAlchemy · PostgreSQL · aiogram 3 · Anthropic Claude · Celery · Redis · openpyxl / ReportLab · Docker · pytest (134 tests)
+
+## Quick start
+
+```bash
+pip install -r requirements.txt
+cp .env.example .env        # DB, bot tokens, ANTHROPIC_API_KEY
+python scripts/seed.py      # creates the first admin
+python run.py               # http://localhost:5000
+python bots/customer_bot.py & python bots/executor_bot.py & python bots/notifier.py
+```
+
+---
+
+*Batafsil o'zbekcha qo'llanma quyida.*
+
 # Xizmat kўrsatish jarayonlarini boshqarish platformasi
 
 Texnik topshiriq (TZ) asosida qurilgan to'liq tizim: veb-boshqaruv platformasi, ikkita Telegram bot
@@ -55,7 +100,7 @@ pip install -r requirements.txt
 cp .env.example .env
 # .env faylini to'ldiring: FLASK_SECRET_KEY, DATABASE_URL, bot tokenlari, ANTHROPIC_API_KEY va h.k.
 
-python scripts/seed.py             # bazani yaratadi + super admin (login: admin / parol: admin12345)
+python scripts/seed.py             # bazani yaratadi + super admin (parol: ADMIN_PASSWORD yoki tasodifiy, konsolda chiqadi)
 python run.py                      # veb-platforma http://localhost:5000 da ishga tushadi
 ```
 

@@ -5,6 +5,7 @@ Ishga tushirish:
     python scripts/seed.py
 """
 import os
+import secrets
 import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -37,9 +38,10 @@ with app.app_context():
 
     if not User.query.filter_by(username="admin").first():
         admin = User(full_name="Bosh Administrator", username="admin", role=RoleEnum.SUPER_ADMIN)
-        admin.set_password("admin12345")
+        password = os.getenv("ADMIN_PASSWORD") or secrets.token_urlsafe(12)
+        admin.set_password(password)
         db.session.add(admin)
-        print("✔ Super admin yaratildi: login=admin, parol=admin12345 (birinchi kirishdan so'ng o'zgartiring!)")
+        print(f"✔ Super admin yaratildi: login=admin, parol={password} (birinchi kirishdan so'ng o'zgartiring!)")
 
     dept_by_name = {}
     if not Department.query.first():
